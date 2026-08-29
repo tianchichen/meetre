@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f0e8">
+  <title>会议公平秤</title>
+  <style>
+    :root {
+      --paper: #f5f0e8;
+      --paper-deep: #e9e0d3;
+      --ink: #1d1b18;
+      --muted: #706960;
+      --line: #c8bcae;
+      --orange: #f06432;
+      --orange-soft: #ffd8c7;
+      --blue: #3c67d6;
+      --blue-soft: #dce6ff;
+      --green: #2a8b72;
+      --green-soft: #d9eee5;
+      --red: #be4e47;
+      --red-soft: #f6d7d1;
+      --shadow: 0 16px 40px rgba(45, 35, 25, .08);
+      --display: "Baskerville", "Songti SC", "STSong", serif;
+      --body: "Avenir Next", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      --mono: "SFMono-Regular", "Menlo", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 12%, rgba(240, 100, 50, .08), transparent 22rem),
+        linear-gradient(135deg, rgba(29, 27, 24, .025) 1px, transparent 1px) 0 0 / 19px 19px,
+        var(--paper);
+      font-family: var(--body);
+      line-height: 1.45;
+    }
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 22px 0 70px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 52px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .brand-mark { width: 28px; height: 28px; border: 3px solid var(--ink); border-radius: 50%; position: relative; background: var(--orange); box-shadow: 4px 4px 0 var(--ink); }
+    .brand-mark::after { content: ""; position: absolute; left: 50%; top: -7px; width: 3px; height: 36px; background: var(--ink); transform: translateX(-50%) rotate(18deg); }
+    .top-note { color: var(--muted); font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .eyebrow { color: var(--orange); font: 700 11px var(--mono); letter-spacing: .15em; text-transform: uppercase; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { max-width: 720px; margin-top: 10px; font: 700 clamp(42px, 7vw, 82px)/.92 var(--display); letter-spacing: -.055em; }
+    .hero { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 28px; }
+    .hero-copy { max-width: 760px; }
+    .hero-sub { max-width: 600px; margin-top: 22px; color: var(--muted); font-size: 16px; }
+    .verdict-card { width: min(300px, 100%); padding: 18px; border: 2px solid var(--ink); background: #fffaf4; box-shadow: 7px 7px 0 var(--ink); transform: rotate(1.2deg); }
+    .verdict-card small { display: block; color: var(--muted); font: 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .verdict-card strong { display: block; margin-top: 7px; font: 700 28px var(--display); }
+    .confidence { display: flex; align-items: center; gap: 7px; margin-top: 14px; color: var(--muted); font-size: 12px; }
+    .confidence-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(350px, .88fr); gap: 22px; align-items: start; }
+    .card { border: 1.5px solid var(--ink); background: rgba(255, 250, 244, .82); box-shadow: var(--shadow); }
+    .scale-card { min-height: 650px; padding: 25px; overflow: hidden; }
+    .card-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .card-heading h2 { font: 700 26px var(--display); letter-spacing: -.03em; }
+    .card-heading p { max-width: 250px; color: var(--muted); font-size: 12px; text-align: right; }
+    .scale-stage { position: relative; height: 420px; margin: 20px -3px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,.32), transparent); }
+    .scale-stage::before { content: "PUBLIC TIME FACILITY / 01"; position: absolute; top: 14px; left: 2px; color: var(--muted); font: 10px var(--mono); letter-spacing: .13em; }
+    .balance-beam { position: absolute; left: 10%; right: 10%; top: 198px; height: 10px; border: 2px solid var(--ink); background: var(--orange); box-shadow: 5px 5px 0 rgba(29,27,24,.2); transform-origin: 50% 50%; transition: transform .55s cubic-bezier(.2,.8,.2,1); z-index: 3; }
+    .balance-beam::after { content: ""; position: absolute; left: 50%; top: -6px; width: 16px; height: 16px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); transform: translateX(-50%); }
+    .balance-pillar { position: absolute; left: 50%; top: 192px; width: 4px; height: 150px; background: var(--ink); transform: translateX(-50%); z-index: 2; }
+    .balance-pillar::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 130px; height: 10px; border: 2px solid var(--ink); background: var(--ink); transform: translateX(-50%) skewX(-30deg); }
+    .pan { position: absolute; top: 210px; width: 43%; min-height: 140px; padding: 17px 14px 12px; border: 2px solid var(--ink); background: rgba(255,250,244,.9); transition: transform .55s cubic-bezier(.2,.8,.2,1); z-index: 4; }
+    .pan::before { content: ""; position: absolute; top: -24px; left: 50%; width: 2px; height: 24px; background: var(--ink); transform: translateX(-50%); }
+    .pan-left { left: 1%; border-top: 7px solid var(--orange); }
+    .pan-right { right: 1%; border-top: 7px solid var(--blue); }
+    .pan-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 11px; font-size: 12px; font-weight: 800; }
+    .pan-title span { color: var(--muted); font: 10px var(--mono); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 5px 7px; border: 1px solid var(--line); background: #fffaf4; color: var(--ink); font-size: 11px; }
+    .chip b { font: 700 10px var(--mono); }
+    .chip-orange { border-color: var(--orange); background: var(--orange-soft); }
+    .chip-blue { border-color: var(--blue); background: var(--blue-soft); }
+    .chip-muted { color: var(--muted); background: var(--paper-deep); }
+    .scale-caption { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 11px; }
+    .scale-caption strong { color: var(--ink); }
+    .state-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 22px; }
+    .state-pill { padding: 9px 10px; border-top: 3px solid var(--line); color: var(--muted); font-size: 11px; }
+    .state-pill.active { color: var(--ink); border-color: var(--green); background: var(--green-soft); }
+    .state-pill.heavy.active { border-color: var(--orange); background: var(--orange-soft); }
+    .state-pill.light.active { border-color: var(--red); background: var(--red-soft); }
+    .controls { padding: 22px; }
+    .controls-header { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .controls-header h2 { font: 700 25px var(--display); }
+    .controls-header p { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .state-badge { flex: none; padding: 7px 9px; border: 1.5px solid var(--ink); color: var(--ink); background: var(--green-soft); font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .state-badge.overweight { background: var(--orange-soft); }
+    .state-badge.underpowered { background: var(--red-soft); }
+    .control-section { padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .control-section:last-child { border-bottom: 0; }
+    .section-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 11px; font: 700 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .section-label span { color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; }
+    .reason-box { padding: 12px; border-left: 4px solid var(--orange); background: #fffaf4; font-size: 13px; }
+    .reason-box strong { display: block; margin-bottom: 4px; }
+    .reason-box p { color: var(--muted); }
+    .role-list { display: grid; gap: 9px; }
+    .role-row { padding: 11px; border: 1px solid var(--line); background: rgba(255,255,255,.32); }
+    .role-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .role-top strong { font-size: 13px; }
+    .role-top small { color: var(--muted); font-size: 10px; }
+    .role-allocations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 9px; }
+    .allocation { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; padding: 5px; background: var(--paper); }
+    .allocation label { min-width: 0; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .allocation b { min-width: 17px; text-align: center; font: 700 12px var(--mono); }
+    .mini-button { width: 20px; height: 20px; padding: 0; border: 1px solid var(--line); background: transparent; color: var(--ink); line-height: 16px; }
+    .mini-button:hover, .mini-button:focus-visible { border-color: var(--ink); background: #fffaf4; outline: none; }
+    .allocation.sync { border-left: 3px solid var(--orange); }
+    .allocation.async { border-left: 3px solid var(--blue); }
+    .allocation.excluded { border-left: 3px solid var(--muted); }
+    .agenda-section { margin-top: 22px; padding: 25px; }
+    .agenda-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; margin-top: 17px; }
+    .agenda-item { display: flex; flex-direction: column; min-height: 220px; padding: 15px; border: 1px solid var(--line); background: #fffaf4; }
+    .agenda-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .agenda-type { color: var(--muted); font: 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .required-mark { color: var(--red); font-size: 11px; }
+    .agenda-item h3 { margin-top: 16px; font: 700 21px/1.05 var(--display); }
+    .agenda-item p { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .agenda-footer { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 17px; }
+    .mode-toggle { display: flex; gap: 4px; }
+    .mode-button { padding: 6px 7px; border: 1px solid var(--line); background: var(--paper); color: var(--muted); font-size: 10px; }
+    .mode-button.active { border-color: var(--ink); color: var(--ink); background: var(--blue-soft); }
+    .attendee-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+    .duration { text-align: right; }
+    .duration small { display: block; color: var(--muted); font-size: 9px; }
+    .duration-controls { display: flex; align-items: center; gap: 4px; margin-top: 3px; }
+    .duration-controls b { min-width: 36px; font: 700 12px var(--mono); text-align: center; }
+    .recommendation { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 22px; }
+    .recommendation > section { padding: 22px; }
+    .recommendation h2 { font: 700 25px var(--display); }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+    .stat { padding: 12px; border: 1px solid var(--line); background: #fffaf4; }
+    .stat small { display: block; color: var(--muted); font-size: 10px; }
+    .stat strong { display: block; margin-top: 5px; font: 700 21px var(--mono); }
+    .prescription-copy { margin-top: 15px; color: var(--muted); font-size: 13px; }
+    .evidence-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .evidence-column { padding: 12px; border-top: 3px solid var(--green); background: rgba(217,238,229,.55); }
+    .evidence-column.against { border-color: var(--orange); background: rgba(255,216,199,.5); }
+    .evidence-column h3 { font-size: 11px; }
+    .evidence-column ul { margin: 8px 0 0; padding-left: 16px; color: var(--muted); font-size: 11px; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .button { padding: 10px 13px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper); font-size: 12px; font-weight: 700; }
+    .button.secondary { background: transparent; color: var(--ink); }
+    .button.blue { border-color: var(--blue); background: var(--blue); }
+    .button:hover, .button:focus-visible { transform: translateY(-1px); box-shadow: 3px 3px 0 rgba(29,27,24,.2); outline: none; }
+    .attendee-message { margin-top: 14px; padding: 13px; border: 1px dashed var(--blue); background: var(--blue-soft); color: #25335c; font-size: 12px; }
+    .import-box { margin-top: 24px; padding: 18px; border: 1px dashed var(--line); background: rgba(255,255,255,.25); }
+    .import-box summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+    .import-box textarea { display: block; width: 100%; min-height: 110px; margin-top: 12px; padding: 10px; border: 1px solid var(--line); resize: vertical; color: var(--ink); background: #fffaf4; font: 11px/1.4 var(--mono); }
+    .error { display: none; margin-top: 9px; padding: 9px; border-left: 3px solid var(--red); color: var(--red); background: var(--red-soft); font-size: 11px; }
+    .footer-note { display: flex; justify-content: space-between; gap: 16px; margin-top: 24px; color: var(--muted); font: 10px var(--mono); letter-spacing: .04em; }
+    @media (max-width: 850px) {
+      .hero { display: block; }
+      .verdict-card { margin-top: 25px; }
+      .layout { grid-template-columns: 1fr; }
+      .agenda-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 20px, 1180px); padding-top: 14px; }
+      .topbar { margin-bottom: 35px; }
+      .top-note { display: none; }
+      h1 { font-size: 54px; }
+      .scale-card { min-height: 620px; padding: 17px; }
+      .scale-stage { height: 390px; margin-left: -8px; margin-right: -8px; }
+      .pan { min-height: 152px; padding: 12px 9px; }
+      .pan-title { font-size: 11px; }
+      .chip { font-size: 10px; }
+      .controls, .agenda-section, .recommendation > section { padding: 17px; }
+      .role-allocations { grid-template-columns: 1fr; }
+      .agenda-grid, .recommendation, .evidence-columns { grid-template-columns: 1fr; }
+      .agenda-item { min-height: 195px; }
+      .stat strong { font-size: 16px; }
+      .footer-note { display: block; }
+      .footer-note span + span { display: block; margin-top: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>会秤 / Fair Scale</span></div>
+      <div class="top-note">A public facility for leaving on time</div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Meeting diagnostic / Interactive prescription</div>
+        <h1 id="meetingTitle">会议公平秤</h1>
+        <p class="hero-sub" id="meetingPurpose">把会议放上秤，先看清它要占用谁的时间，再决定要不要让所有人同时在线。</p>
+      </div>
+      <aside class="verdict-card" aria-live="polite">
+        <small>AI 初始处方</small>
+        <strong id="verdictLabel">—</strong>
+        <div class="confidence"><span class="confidence-dot"></span><span id="confidenceLabel">判断信心 —</span></div>
+      </aside>
+    </section>
+
+    <div class="layout">
+      <section class="card scale-card" aria-labelledby="scaleHeading">
+        <div class="card-heading">
+          <div><div class="eyebrow">01 / Put it on the scale</div><h2 id="scaleHeading">先称一称，再开会</h2></div>
+          <p>左边是被占用的集体时间，右边是必须同步完成的价值。</p>
+        </div>
+        <div class="scale-stage" id="scaleStage">
+          <div class="balance-beam" id="balanceBeam" aria-hidden="true"></div>
+          <div class="balance-pillar" aria-hidden="true"></div>
+          <div class="pan pan-left">
+            <div class="pan-title">占用的时间 <span id="costCaption">—</span></div>
+            <div class="chips" id="costChips"></div>
+          </div>
+          <div class="pan pan-right">
+            <div class="pan-title">必须同步的价值 <span id="valueCaption">—</span></div>
+            <div class="chips" id="valueChips"></div>
+          </div>
+        </div>
+        <div class="scale-caption"><span>当前方案：<strong id="currentPlanLabel">—</strong></span><span>AI 推荐：<strong id="recommendedPlanLabel">—</strong></span></div>
+        <div class="state-strip" aria-label="当前天平状态">
+          <div class="state-pill" data-state="overweight">太重</div>
+          <div class="state-pill" data-state="balanced">平衡</div>
+          <div class="state-pill light" data-state="underpowered">轻过头了</div>
+        </div>
+      </section>
+
+      <section class="card controls" aria-labelledby="controlsHeading">
+        <div class="controls-header">
+          <div><div class="eyebrow">02 / Adjust the plan</div><h2 id="controlsHeading">把它调到刚刚好</h2><p>点击砝码，看看少占用一点时间会发生什么。</p></div>
+          <div class="state-badge" id="stateBadge">—</div>
+        </div>
+        <div class="control-section">
+          <div class="section-label">判断依据 <span>AI 的可读证据</span></div>
+          <div class="reason-box"><strong id="verdictSummary">—</strong><p id="recommendationWhy">—</p></div>
+        </div>
+        <div class="control-section">
+          <div class="section-label">角色砝码 <span>点击移动到异步或退出</span></div>
+          <div class="role-list" id="roleList"></div>
+        </div>
+        <div class="control-section">
+          <div class="section-label">当前成本 <span>异步也算时间</span></div>
+          <div class="stat-grid">
+            <div class="stat"><small>集体成本</small><strong id="currentCost">—</strong></div>
+            <div class="stat"><small>返还时间</small><strong id="savedTime">—</strong></div>
+            <div class="stat"><small>同步人数</small><strong id="syncPeople">—</strong></div>
+          </div>
+        </div>
+        <div class="control-section" id="attendeeSection" hidden>
+          <div class="section-label">我的参与方式 <span>把自己的时间也称清楚</span></div>
+          <div class="attendee-choices">
+            <button class="mode-button" data-attendee-mode="full" type="button">全程参加</button>
+            <button class="mode-button" data-attendee-mode="partial" type="button">只参加相关议题</button>
+            <button class="mode-button" data-attendee-mode="input_then_leave" type="button">先提供输入</button>
+            <button class="mode-button" data-attendee-mode="async" type="button">异步退出</button>
+          </div>
+          <div class="stat-grid" style="margin-top:11px"><div class="stat"><small>我的预计占用</small><strong id="attendeePersonalTime">—</strong></div></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card agenda-section" aria-labelledby="agendaHeading">
+      <div class="card-heading"><div><div class="eyebrow">03 / Shape the agenda</div><h2 id="agendaHeading">让每个议题待在合适的地方</h2></div><p>不改变议题含义，只调整它该不该占用同步时间。</p></div>
+      <div class="agenda-grid" id="agendaGrid"></div>
+    </section>
+
+    <section class="recommendation">
+      <section class="card">
+        <div class="eyebrow">04 / Prescription</div>
+        <h2>会议处方</h2>
+        <p class="prescription-copy" id="prescriptionCopy">—</p>
+        <div class="evidence-columns">
+          <div class="evidence-column"><h3>为什么值得同步</h3><ul id="evidenceFor"></ul></div>
+          <div class="evidence-column against"><h3>为什么不该这么重</h3><ul id="evidenceAgainst"></ul></div>
+        </div>
+        <div class="action-row">
+          <button class="button" id="applyButton">采用 AI 处方</button>
+          <button class="button secondary" id="resetButton">恢复原方案</button>
+          <button class="button secondary" id="copyPlanButton">复制当前方案</button>
+          <button class="button secondary" id="reviewButton">带回 Agent 复评</button>
+        </div>
+        <div class="attendee-message" id="attendeeMessage" hidden></div>
+        <div class="action-row" id="attendeeActions" hidden><button class="button blue" id="copyAttendeeButton">复制给发起人</button></div>
+      </section>
+      <section class="card">
+        <div class="eyebrow">05 / Evidence</div>
+        <h2>为什么这样称</h2>
+        <p class="prescription-copy">天平不是一个神秘分数。它把 Agent 找到的事实和你的调整，放在同一个可检查的空间里。</p>
+        <div class="stat-grid">
+          <div class="stat"><small>原始人数</small><strong id="originalPeople">—</strong></div>
+          <div class="stat"><small>原始时长</small><strong id="originalDuration">—</strong></div>
+          <div class="stat"><small>推荐成本</small><strong id="recommendedCost">—</strong></div>
+        </div>
+        <div class="reason-box" style="margin-top:16px;border-color:var(--blue)"><strong>规则公开</strong><p>必要角色不能被“优化”掉；必须同步的议题不能被假装成异步；每一次减重都必须说明代价。</p></div>
+      </section>
+    </section>
+
+    <details class="import-box">
+      <summary>导入 Agent 秤票（适合公开 Demo 或其他 Agent）</summary>
+      <textarea id="jsonInput" placeholder="把 Agent 返回的 JSON 粘贴到这里"></textarea>
+      <button class="button secondary" id="importButton">导入并重新称重</button>
+      <div class="error" id="importError" role="alert"></div>
+    </details>
+
+    <footer class="footer-note"><span>会秤是建议，不是行政命令。</span><span>本报告由你的 Agent 判断，由本地 HTML 负责称重。</span></footer>
+  </main>
+
+  <script id="meeting-data" type="application/json">eyJzY2hlbWFWZXJzaW9uIjoxLCJwZXJzcGVjdGl2ZSI6Im9yZ2FuaXplciIsIm1lZXRpbmciOnsidGl0bGUiOiLlkajkupTpobnnm67lkIzmraXkvJoiLCJwdXJwb3NlIjoi5ZCM5q2l6aG555uu6L+b5bqm5bm25Yaz5a6a5LiL5ZGo5Y+R5biD5pel5pyfIiwiZXhwZWN0ZWRPdXRjb21lIjoi5Yaz5a6a5Y+R5biD5pel5pyf77yM56Gu6K6k6aOO6Zmp6LSf6LSj5Lq6IiwicGFydGljaXBhbnRzIjo4LCJkdXJhdGlvbk1pbnV0ZXMiOjYwfSwidmVyZGljdCI6eyJraW5kIjoic2hyaW5rIiwiY29uZmlkZW5jZSI6ImhpZ2giLCJzdW1tYXJ5Ijoi5pyJ5Lik5Liq5Yaz5a6a5YC85b6X5ZCM5q2l77yM5L2G5b2T5YmN6YKA6K+36IyD5Zu05ZKM6K6u56iL6YO95YGP6YeN44CCIn0sImV2aWRlbmNlIjp7ImZvciI6W3sibGFiZWwiOiLpnIDopoHnjrDlnLrlhrPnrZYiLCJkZXRhaWwiOiLkuqflk4HkuI7noJTlj5HpnIDopoHlhbHlkIzmnYPooaHlj5HluIPml6XmnJ/jgIIiLCJ3ZWlnaHQiOjN9LHsibGFiZWwiOiLlrZjlnKjnnJ/lrp7pmLvloZ4iLCJkZXRhaWwiOiLpo47pmanotJ/otKPkurrpnIDopoHlvZPlnLrnoa7orqTkuIvkuIDmraXjgIIiLCJ3ZWlnaHQiOjJ9XSwiYWdhaW5zdCI6W3sibGFiZWwiOiLov5vluqbmm7TmlrDlj6/lvILmraUiLCJkZXRhaWwiOiLlpJrmlbDov5vluqbkv6Hmga/lj6/ku6Xmj5DliY3lhpnlhaXmm7TmlrDmlofmoaPjgIIiLCJ3ZWlnaHQiOjJ9LHsibGFiZWwiOiLkuInkurrlj6rpnIDnn6XkvJoiLCJkZXRhaWwiOiLku5bku6zkuI3kvJrmlLnlj5jkvJrorq7kuK3nmoTku7vkvZXlhrPlrprjgIIiLCJ3ZWlnaHQiOjN9XX0sInJvbGVzIjpbeyJpZCI6ImRlY2lzaW9uIiwibGFiZWwiOiLlhrPnrZbogIUiLCJvcmlnaW5hbENvdW50IjoxLCJzeW5jQ291bnQiOjEsImFzeW5jQ291bnQiOjAsImV4Y2x1ZGVkQ291bnQiOjAsInJlcXVpcmVkTWluIjoxLCJ3aHkiOiLmnIDnu4jmi43mnb8ifSx7ImlkIjoicHJvZHVjdCIsImxhYmVsIjoi5Lqn5ZOB5YWz6ZSu6L6T5YWlIiwib3JpZ2luYWxDb3VudCI6MSwic3luY0NvdW50IjoxLCJhc3luY0NvdW50IjowLCJleGNsdWRlZENvdW50IjowLCJyZXF1aXJlZE1pbiI6MSwid2h5Ijoi5o+Q5L6b55So5oi35ZKM6IyD5Zu05Yik5patIn0seyJpZCI6ImVuZ2luZWVyaW5nIiwibGFiZWwiOiLnoJTlj5HlhbPplK7ovpPlhaUiLCJvcmlnaW5hbENvdW50IjoyLCJzeW5jQ291bnQiOjIsImFzeW5jQ291bnQiOjAsImV4Y2x1ZGVkQ291bnQiOjAsInJlcXVpcmVkTWluIjoxLCJ3aHkiOiLnoa7orqTmioDmnK/lj6/ooYzmgKcifSx7ImlkIjoib3duZXIiLCJsYWJlbCI6IuaJp+ihjOi0n+i0o+S6uiIsIm9yaWdpbmFsQ291bnQiOjEsInN5bmNDb3VudCI6MSwiYXN5bmNDb3VudCI6MCwiZXhjbHVkZWRDb3VudCI6MCwicmVxdWlyZWRNaW4iOjEsIndoeSI6IuehruiupOmjjumZqeihjOWKqCJ9LHsiaWQiOiJpbmZvcm1lZCIsImxhYmVsIjoi55+l5Lya6ICFIiwib3JpZ2luYWxDb3VudCI6Mywic3luY0NvdW50IjozLCJhc3luY0NvdW50IjowLCJleGNsdWRlZENvdW50IjowLCJyZXF1aXJlZE1pbiI6MCwid2h5Ijoi5Y+q6ZyA55+l6YGT5pyA57uI57uT5p6cIn1dLCJhZ2VuZGEiOlt7ImlkIjoicHJvZ3Jlc3MiLCJ0aXRsZSI6Iumhueebrui/m+W6puaSreaKpSIsInR5cGUiOiJ1cGRhdGUiLCJzeW5jUmVxdWlyZW1lbnQiOiJub25lIiwibW9kZSI6InN5bmMiLCJzeW5jTWludXRlcyI6MzAsImFzeW5jTWludXRlcyI6NSwibWluU3luY01pbnV0ZXMiOjAsInJlcXVpcmVkUm9sZUlkcyI6W10sIndoeSI6IuS/oeaBr+WPr+aPkOWJjeWGmeWFpeW8guatpeabtOaWsCJ9LHsiaWQiOiJkYXRlIiwidGl0bGUiOiLlhrPlrprlj5HluIPml6XmnJ8iLCJ0eXBlIjoiZGVjaXNpb24iLCJzeW5jUmVxdWlyZW1lbnQiOiJyZXF1aXJlZCIsIm1vZGUiOiJzeW5jIiwic3luY01pbnV0ZXMiOjIwLCJhc3luY01pbnV0ZXMiOjUsIm1pblN5bmNNaW51dGVzIjoxMCwicmVxdWlyZWRSb2xlSWRzIjpbImRlY2lzaW9uIiwicHJvZHVjdCIsImVuZ2luZWVyaW5nIl0sIndoeSI6IumcgOimgeeOsOWcuuadg+ihoeWPluiIjSJ9LHsiaWQiOiJyaXNrcyIsInRpdGxlIjoi56Gu6K6k6aOO6Zmp5LiO6LSf6LSj5Lq6IiwidHlwZSI6InJlc29sdmUiLCJzeW5jUmVxdWlyZW1lbnQiOiJwcmVmZXJyZWQiLCJtb2RlIjoic3luYyIsInN5bmNNaW51dGVzIjoxMCwiYXN5bmNNaW51dGVzIjo1LCJtaW5TeW5jTWludXRlcyI6NSwicmVxdWlyZWRSb2xlSWRzIjpbIm93bmVyIiwicHJvZHVjdCJdLCJ3aHkiOiLpmLvloZ7pnIDopoHlrp7ml7bnoa7orqQifV0sInJlY29tbWVuZGF0aW9uIjp7InJvbGVTeW5jQ291bnRzIjp7ImRlY2lzaW9uIjoxLCJwcm9kdWN0IjoxLCJlbmdpbmVlcmluZyI6MSwib3duZXIiOjEsImluZm9ybWVkIjowfSwiYWdlbmRhTW9kZXMiOnsicHJvZ3Jlc3MiOiJhc3luYyIsImRhdGUiOiJzeW5jIiwicmlza3MiOiJzeW5jIn0sImFnZW5kYU1pbnV0ZXMiOnsicHJvZ3Jlc3MiOjMwLCJkYXRlIjoxNSwicmlza3MiOjEwfSwiYXN5bmNNaW51dGVzIjo1LCJ3aHkiOiLkv53nlZnpnIDopoHlhrPnrZblkozop6PlhrPpmLvloZ7nmoTmoLjlv4Pop5LoibLvvIzmiorov5vluqbmkq3miqXmlLnmiJDlvILmraXjgIIifSwiYXR0ZW5kZWVQbGFuIjpudWxsfQ==</script>
+  <script>
+    (() => {
+      "use strict";
+      const LABELS = {
+        keep: "值得开", shrink: "瘦身后开", async: "改为异步", clarify: "先别开",
+        overweight: "太重", balanced: "平衡", underpowered: "轻过头了",
+        decision: "决策", resolve: "分歧处理", co_create: "共同创造", update: "信息同步", sensitive: "敏感沟通"
+      };
+      const BUCKETS = ["syncCount", "asyncCount", "excludedCount"];
+      const BUCKET_LABELS = { syncCount: "会议中", asyncCount: "异步知会", excludedCount: "无需参与" };
+      const base64ToUtf8 = (value) => {
+        const binary = atob(value);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+      };
+      const utf8ToBase64 = (value) => {
+        const bytes = new TextEncoder().encode(value);
+        let binary = "";
+        bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+        return btoa(binary);
+      };
+      const clone = (value) => JSON.parse(JSON.stringify(value));
+      const loadEmbedded = () => JSON.parse(base64ToUtf8(document.getElementById("meeting-data").textContent.trim()));
+      const loadHash = () => {
+        const hash = window.location.hash;
+        if (!hash.startsWith("#data=")) return null;
+        try { return JSON.parse(base64ToUtf8(hash.slice(6))); } catch (_) { return null; }
+      };
+      let data = loadHash() || loadEmbedded();
+      let originalData = clone(data);
+      let state = { roles: clone(data.roles), agenda: clone(data.agenda) };
+      let attendeeMode = data.attendeePlan?.recommendedMode || "async";
+
+      const $ = (id) => document.getElementById(id);
+      const text = (element, value) => { element.textContent = value == null ? "" : String(value); };
+      const formatMinutes = (minutes) => {
+        const rounded = Math.max(0, Math.round(minutes));
+        if (rounded < 60) return `${rounded} 分钟`;
+        const hours = Math.floor(rounded / 60);
+        const rest = rounded % 60;
+        return rest ? `${hours} 小时 ${rest} 分钟` : `${hours} 小时`;
+      };
+      const formatDelta = (minutes) => minutes >= 0 ? `返还 ${formatMinutes(minutes)}` : `多占 ${formatMinutes(Math.abs(minutes))}`;
+      const roleById = (id) => state.roles.find((role) => role.id === id);
+      const agendaById = (id) => state.agenda.find((item) => item.id === id);
+
+      function basicValidate(next) {
+        if (!next || next.schemaVersion !== 1 || !["organizer", "attendee"].includes(next.perspective)) throw new Error("不是可识别的 Result Schema v1");
+        if (!next.meeting || !next.verdict || !Array.isArray(next.roles) || !Array.isArray(next.agenda) || !next.recommendation) throw new Error("缺少 meeting、verdict、roles、agenda 或 recommendation");
+        if (!LABELS[next.verdict.kind]) throw new Error("未知的会议处方");
+        if (next.roles.length > 12 || next.agenda.length > 12) throw new Error("角色或议题不能超过 12 项");
+        return next;
+      }
+
+      function currentCost() {
+        const syncPeople = state.roles.reduce((sum, role) => sum + role.syncCount, 0);
+        const asyncPeople = state.roles.reduce((sum, role) => sum + role.asyncCount, 0);
+        const syncMinutes = state.agenda.filter((item) => item.mode === "sync").reduce((sum, item) => sum + item.syncMinutes, 0);
+        const asyncMinutes = state.agenda.filter((item) => item.mode === "async").reduce((sum, item) => sum + item.asyncMinutes, 0);
+        return { syncPeople, asyncPeople, syncMinutes, asyncMinutes, total: syncPeople * syncMinutes + asyncPeople * asyncMinutes };
+      }
+
+      function recommendedCost() {
+        const syncPeople = data.roles.reduce((sum, role) => sum + (data.recommendation.roleSyncCounts[role.id] || 0), 0);
+        const asyncPeople = data.roles.reduce((sum, role) => sum + role.originalCount - (data.recommendation.roleSyncCounts[role.id] || 0), 0);
+        const syncMinutes = data.agenda.reduce((sum, item) => sum + (data.recommendation.agendaModes[item.id] === "sync" ? data.recommendation.agendaMinutes[item.id] : 0), 0);
+        const asyncMinutes = data.agenda.reduce((sum, item) => sum + (data.recommendation.agendaModes[item.id] === "async" ? item.asyncMinutes : 0), 0);
+        return { syncPeople, asyncPeople, syncMinutes, asyncMinutes, total: syncPeople * syncMinutes + asyncPeople * asyncMinutes };
+      }
+
+      function underpoweredReasons() {
+        const reasons = [];
+        state.agenda.forEach((item) => {
+          if (item.mode === "async" && item.syncRequirement === "required") reasons.push(`“${item.title}”必须实时完成，不能移出会议。`);
+          if (item.mode === "sync" && item.syncMinutes < item.minSyncMinutes) reasons.push(`“${item.title}”低于最低有效时长 ${item.minSyncMinutes} 分钟。`);
+          if (item.mode === "sync") item.requiredRoleIds.forEach((roleId) => {
+            const role = roleById(roleId);
+            if (role && role.syncCount < role.requiredMin) reasons.push(`“${role.label}”低于必要人数 ${role.requiredMin} 人。`);
+          });
+        });
+        return [...new Set(reasons)];
+      }
+
+      function balance() {
+        const cost = currentCost();
+        const target = recommendedCost();
+        const reasons = underpoweredReasons();
+        const status = reasons.length ? "underpowered" : (cost.total > Math.max(1, target.total) * 1.15 ? "overweight" : "balanced");
+        return { cost, target, status, reasons, original: data.meeting.participants * data.meeting.durationMinutes, saved: data.meeting.participants * data.meeting.durationMinutes - cost.total };
+      }
+
+      function move(role, from, to) {
+        if (role[from] <= 0) return;
+        role[from] -= 1; role[to] += 1; render();
+      }
+      function nudgeRole(roleId, bucket, direction) {
+        const role = roleById(roleId);
+        if (!role) return;
+        if (direction < 0) {
+          if (bucket === "syncCount") move(role, "syncCount", "asyncCount");
+          if (bucket === "asyncCount") move(role, "asyncCount", "excludedCount");
+        } else {
+          if (bucket === "syncCount") {
+            if (role.asyncCount > 0) move(role, "asyncCount", "syncCount");
+            else move(role, "excludedCount", "syncCount");
+          }
+          if (bucket === "asyncCount") {
+            if (role.excludedCount > 0) move(role, "excludedCount", "asyncCount");
+            else move(role, "syncCount", "asyncCount");
+          }
+          if (bucket === "excludedCount") {
+            if (role.asyncCount > 0) move(role, "asyncCount", "excludedCount");
+            else move(role, "syncCount", "excludedCount");
+          }
+        }
+      }
+
+      function renderRoles() {
+        const list = $("roleList"); list.replaceChildren();
+        state.roles.forEach((role) => {
+          const row = document.createElement("div"); row.className = "role-row";
+          const top = document.createElement("div"); top.className = "role-top";
+          const name = document.createElement("strong"); text(name, role.label);
+          const why = document.createElement("small"); text(why, role.requiredMin ? `至少 ${role.requiredMin} 人在场` : role.why);
+          top.append(name, why); row.append(top);
+          const allocations = document.createElement("div"); allocations.className = "role-allocations";
+          BUCKETS.forEach((bucket) => {
+            const allocation = document.createElement("div"); allocation.className = `allocation ${bucket.replace("Count", "")}`;
+            const minus = document.createElement("button"); minus.className = "mini-button"; minus.type = "button"; minus.setAttribute("aria-label", `减少${BUCKET_LABELS[bucket]}`); minus.textContent = "−";
+            minus.addEventListener("click", () => nudgeRole(role.id, bucket, -1));
+            const label = document.createElement("label"); text(label, BUCKET_LABELS[bucket]);
+            const count = document.createElement("b"); count.id = `count-${role.id}-${bucket}`; text(count, role[bucket]);
+            const plus = document.createElement("button"); plus.className = "mini-button"; plus.type = "button"; plus.setAttribute("aria-label", `增加${BUCKET_LABELS[bucket]}`); plus.textContent = "+";
+            plus.addEventListener("click", () => nudgeRole(role.id, bucket, 1));
+            allocation.append(minus, label, count, plus); allocations.append(allocation);
+          });
+          row.append(allocations); list.append(row);
+        });
+      }
+
+      function renderAgenda() {
+        const grid = $("agendaGrid"); grid.replaceChildren();
+        state.agenda.forEach((item) => {
+          const card = document.createElement("article"); card.className = "agenda-item";
+          const meta = document.createElement("div"); meta.className = "agenda-meta";
+          const type = document.createElement("span"); type.className = "agenda-type"; text(type, LABELS[item.type]);
+          const required = document.createElement("span"); required.className = "required-mark"; text(required, item.syncRequirement === "required" ? "必须同步" : item.syncRequirement === "preferred" ? "建议同步" : "可异步");
+          meta.append(type, required); card.append(meta);
+          const heading = document.createElement("h3"); text(heading, item.title); card.append(heading);
+          const why = document.createElement("p"); text(why, item.why); card.append(why);
+          const footer = document.createElement("div"); footer.className = "agenda-footer";
+          const toggle = document.createElement("div"); toggle.className = "mode-toggle";
+          ["sync", "async"].forEach((mode) => {
+            const button = document.createElement("button"); button.type = "button"; button.className = `mode-button ${item.mode === mode ? "active" : ""}`; text(button, mode === "sync" ? "同步" : "异步");
+            button.addEventListener("click", () => { item.mode = mode; render(); }); toggle.append(button);
+          });
+          const duration = document.createElement("div"); duration.className = "duration";
+          const durationLabel = document.createElement("small"); text(durationLabel, item.mode === "sync" ? "会议分钟" : "阅读分钟");
+          const durationControls = document.createElement("div"); durationControls.className = "duration-controls";
+          const minus = document.createElement("button"); minus.className = "mini-button"; minus.type = "button"; minus.textContent = "−";
+          const plus = document.createElement("button"); plus.className = "mini-button"; plus.type = "button"; plus.textContent = "+";
+          const key = item.mode === "sync" ? "syncMinutes" : "asyncMinutes"; const min = item.mode === "sync" ? 0 : 1; const max = item.mode === "sync" ? 480 : 120;
+          const minutes = document.createElement("b"); text(minutes, `${item[key]}m`);
+          minus.addEventListener("click", () => { item[key] = Math.max(min, item[key] - 5); render(); });
+          plus.addEventListener("click", () => { item[key] = Math.min(max, item[key] + 5); render(); });
+          durationControls.append(minus, minutes, plus); duration.append(durationLabel, durationControls);
+          footer.append(toggle, duration); card.append(footer); grid.append(card);
+        });
+      }
+
+      function renderScale(snapshot) {
+        const costChips = $("costChips"); costChips.replaceChildren();
+        state.roles.filter((role) => role.syncCount > 0).forEach((role) => { const chip = document.createElement("span"); chip.className = "chip chip-orange"; text(chip, `${role.label} × ${role.syncCount}`); costChips.append(chip); });
+        const costTime = document.createElement("span"); costTime.className = "chip chip-muted"; text(costTime, formatMinutes(snapshot.cost.total)); costChips.append(costTime);
+        const valueChips = $("valueChips"); valueChips.replaceChildren();
+        state.agenda.filter((item) => item.mode === "sync").forEach((item) => { const chip = document.createElement("span"); chip.className = "chip chip-blue"; text(chip, item.title); valueChips.append(chip); });
+        if (!valueChips.childElementCount) { const chip = document.createElement("span"); chip.className = "chip chip-muted"; text(chip, "没有同步议题"); valueChips.append(chip); }
+        text($("costCaption"), formatMinutes(snapshot.cost.total)); text($("valueCaption"), `${state.agenda.filter((item) => item.mode === "sync").length} 个议题`);
+        const ratio = snapshot.target.total ? snapshot.cost.total / snapshot.target.total : 1;
+        const angle = snapshot.status === "underpowered" ? -7 : Math.max(-8, Math.min(10, (ratio - 1) * 7));
+        $("balanceBeam").style.transform = `rotate(${angle}deg)`;
+      }
+
+      function renderEvidence() {
+        const fill = (id, items) => { const list = $(id); list.replaceChildren(); items.forEach((item) => { const li = document.createElement("li"); text(li, item.detail || item.label); list.append(li); }); if (!items.length) { const li = document.createElement("li"); text(li, "暂无额外证据"); list.append(li); } };
+        fill("evidenceFor", data.evidence.for || []); fill("evidenceAgainst", data.evidence.against || []);
+      }
+
+      function renderAttendee() {
+        const visible = data.perspective === "attendee" && data.attendeePlan;
+        $("attendeeSection").hidden = !visible;
+        $("attendeeMessage").hidden = !visible;
+        $("attendeeActions").hidden = !visible;
+        if (!visible) return;
+        const plan = data.attendeePlan;
+        document.querySelectorAll("[data-attendee-mode]").forEach((button) => button.classList.toggle("active", button.dataset.attendeeMode === attendeeMode));
+        const selectedItems = state.agenda.filter((item) => item.mode === "sync" && plan.relevantAgendaIds.includes(item.id));
+        const selected = selectedItems.map((item) => item.title);
+        const personalMinutes = attendeeMode === "full" ? data.meeting.durationMinutes : attendeeMode === "partial" ? selectedItems.reduce((sum, item) => sum + item.syncMinutes, 0) : plan.recommendedMinutes;
+        text($("attendeePersonalTime"), formatMinutes(personalMinutes));
+        let message = plan.message;
+        if (attendeeMode === "full") message = "我会参加这场会议的全程，并对会议结果负责。";
+        if (attendeeMode === "partial") message = `我可以只参加“${selected.length ? selected.join("、") : "相关议题"}”，其余部分不需要我在场。`;
+        if (attendeeMode === "input_then_leave") message = `我会在会前提供输入，会议中只参加“${selected.length ? selected.join("、") : "相关议题"}”，确认完就先离开。`;
+        if (attendeeMode === "clarify") message = "我还缺少这场会的明确产出和同步理由，暂时无法确认是否需要参加。";
+        message = message.replace(/\{参加议题\}/g, selected.length ? selected.join("、") : "相关议题");
+        text($("attendeeMessage"), message);
+      }
+
+      function render() {
+        const snapshot = balance();
+        document.title = `${data.meeting.title} · 会议公平秤`;
+        text($("meetingTitle"), data.meeting.title); text($("meetingPurpose"), data.meeting.purpose); text($("verdictLabel"), LABELS[data.verdict.kind]); text($("confidenceLabel"), `判断信心 ${data.verdict.confidence}`);
+        text($("verdictSummary"), data.verdict.summary); text($("recommendationWhy"), snapshot.reasons.length ? snapshot.reasons.join(" ") : data.recommendation.why);
+        text($("currentPlanLabel"), `${snapshot.cost.syncPeople} 人同步 / ${formatMinutes(snapshot.cost.syncMinutes)}`); text($("recommendedPlanLabel"), `${snapshot.target.syncPeople} 人同步 / ${formatMinutes(snapshot.target.syncMinutes)}`);
+        text($("stateBadge"), LABELS[snapshot.status]); $("stateBadge").className = `state-badge ${snapshot.status}`;
+        document.querySelectorAll(".state-pill").forEach((pill) => pill.classList.toggle("active", pill.dataset.state === snapshot.status));
+        text($("currentCost"), formatMinutes(snapshot.cost.total)); text($("savedTime"), formatDelta(snapshot.saved)); text($("syncPeople"), `${snapshot.cost.syncPeople} 人`);
+        text($("originalPeople"), `${data.meeting.participants} 人`); text($("originalDuration"), formatMinutes(data.meeting.durationMinutes)); text($("recommendedCost"), formatMinutes(snapshot.target.total));
+        const copy = data.verdict.kind === "async" ? "建议先把信息整理成异步更新，只有出现真实分歧时再召集相关角色。" : `建议保留 ${snapshot.target.syncPeople} 位核心角色，把同步议题压缩到 ${formatMinutes(snapshot.target.syncMinutes)}。`;
+        text($("prescriptionCopy"), copy); renderRoles(); renderAgenda(); renderScale(snapshot); renderEvidence(); renderAttendee();
+      }
+
+      function applyRecommendation() {
+        state.roles.forEach((role) => { role.syncCount = data.recommendation.roleSyncCounts[role.id] || 0; role.asyncCount = role.originalCount - role.syncCount; role.excludedCount = 0; });
+        state.agenda.forEach((item) => { item.mode = data.recommendation.agendaModes[item.id]; item.syncMinutes = data.recommendation.agendaMinutes[item.id]; }); render();
+      }
+      function reset() { state = { roles: clone(originalData.roles), agenda: clone(originalData.agenda) }; data = originalData; attendeeMode = data.attendeePlan?.recommendedMode || "async"; render(); }
+      function currentPlanText() {
+        const snapshot = balance();
+        const agenda = state.agenda.map((item) => `${item.title}：${item.mode === "sync" ? "同步" : "异步"} ${item.mode === "sync" ? item.syncMinutes : item.asyncMinutes} 分钟`).join("；");
+        return `会议公平秤｜${data.meeting.title}\n当前状态：${LABELS[snapshot.status]}\n同步人数：${snapshot.cost.syncPeople}\n集体成本：${formatMinutes(snapshot.cost.total)}\n返还时间：${formatDelta(snapshot.saved)}\n议题：${agenda}`;
+      }
+      function reviewPrompt() { return `请重新称量这场会议。当前用户在 HTML 沙盘中做了这些调整：\n${currentPlanText()}\n请依据公平公约重新判断，并返回 Result Schema v1 JSON。`;
+      }
+      function copy(value, button) {
+        const done = () => { const old = button.textContent; button.textContent = "已复制"; setTimeout(() => { button.textContent = old; }, 1300); };
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(value).then(done).catch(() => fallback()); else fallback();
+        function fallback() { const area = document.createElement("textarea"); area.value = value; area.style.position = "fixed"; area.style.opacity = "0"; document.body.append(area); area.select(); try { document.execCommand("copy"); done(); } finally { area.remove(); } }
+      }
+
+      $("applyButton").addEventListener("click", applyRecommendation);
+      $("resetButton").addEventListener("click", reset);
+      $("copyPlanButton").addEventListener("click", (event) => copy(currentPlanText(), event.currentTarget));
+      $("reviewButton").addEventListener("click", (event) => copy(reviewPrompt(), event.currentTarget));
+      $("copyAttendeeButton").addEventListener("click", (event) => copy($("attendeeMessage").textContent, event.currentTarget));
+      document.querySelectorAll("[data-attendee-mode]").forEach((button) => button.addEventListener("click", () => { attendeeMode = button.dataset.attendeeMode; render(); }));
+      $("importButton").addEventListener("click", () => {
+        const error = $("importError"); error.style.display = "none";
+        try {
+          const next = basicValidate(JSON.parse($("jsonInput").value));
+          window.location.hash = `data=${utf8ToBase64(JSON.stringify(next))}`; window.location.reload();
+        } catch (err) { text(error, err.message || "无法导入"); error.style.display = "block"; }
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>

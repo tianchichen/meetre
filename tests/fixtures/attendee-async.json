@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "perspective": "attendee",
+  "meeting": {
+    "title": "设计评审同步会",
+    "purpose": "同步最新设计并收集意见",
+    "expectedOutcome": "确认需要修改的设计点",
+    "participants": 6,
+    "durationMinutes": 45
+  },
+  "verdict": {
+    "kind": "async",
+    "confidence": "medium",
+    "summary": "你可以先提供书面反馈，不必参加全程会议。"
+  },
+  "evidence": {
+    "for": [
+      {"label": "有少量评审价值", "detail": "视觉负责人需要收集具体修改意见。", "weight": 1}
+    ],
+    "against": [
+      {"label": "独立评审即可", "detail": "你的反馈可以在设计稿中异步完成。", "weight": 3}
+    ]
+  },
+  "roles": [
+    {"id": "designer", "label": "设计负责人", "originalCount": 1, "syncCount": 1, "asyncCount": 0, "excludedCount": 0, "requiredMin": 1, "why": "负责收敛设计"},
+    {"id": "reviewer", "label": "评审者", "originalCount": 3, "syncCount": 3, "asyncCount": 0, "excludedCount": 0, "requiredMin": 0, "why": "提供反馈"},
+    {"id": "observer", "label": "观察者", "originalCount": 2, "syncCount": 2, "asyncCount": 0, "excludedCount": 0, "requiredMin": 0, "why": "只需知道结果"}
+  ],
+  "agenda": [
+    {"id": "walkthrough", "title": "设计稿走读", "type": "update", "syncRequirement": "none", "mode": "sync", "syncMinutes": 25, "asyncMinutes": 8, "minSyncMinutes": 0, "requiredRoleIds": [], "why": "可以先看稿再评论"},
+    {"id": "feedback", "title": "确认修改点", "type": "resolve", "syncRequirement": "preferred", "mode": "sync", "syncMinutes": 20, "asyncMinutes": 7, "minSyncMinutes": 10, "requiredRoleIds": ["designer"], "why": "设计负责人需要收敛意见"}
+  ],
+  "recommendation": {
+    "roleSyncCounts": {"designer": 1, "reviewer": 0, "observer": 0},
+    "agendaModes": {"walkthrough": "async", "feedback": "async"},
+    "agendaMinutes": {"walkthrough": 25, "feedback": 20},
+    "asyncMinutes": 15,
+    "why": "先异步收集意见，只有出现冲突时再邀请相关评审者。"
+  },
+  "attendeePlan": {
+    "currentRoleId": "reviewer",
+    "relevantAgendaIds": ["feedback"],
+    "recommendedMode": "async",
+    "recommendedMinutes": 15,
+    "message": "我可以先在设计稿中留下反馈，目前没有必须参加同步会议的议题。若需要我参加{参加议题}，请告诉我具体要做的决定。"
+  }
+}
