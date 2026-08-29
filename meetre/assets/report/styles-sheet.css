@@ -20,15 +20,26 @@
 .foot { margin-top: clamp(18px, 3vh, 30px); padding-top: 12px; border-top: 1.5px solid var(--ink); font: 10px var(--mono); letter-spacing: .05em; opacity: .74; }
 
 @media (max-width: 900px) {
-  .investment { margin-left: 0; text-align: left; }
+  .settlement { grid-template-columns: 1fr; }
+  .settlement-values { justify-self: start; text-align: left; }
 }
 @media (max-width: 720px) {
   .trays { grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 10px); }
+  .perspective-row { align-items: flex-start; flex-direction: column; gap: 8px; }
   .role-need, .topic-lock { display: none; }
   .evidence { grid-template-columns: 1fr; }
 }
 /* 整页滚动现在是基础行为（见 styles.css / .page 的 min-height），窄屏只需要缩字号。 */
 @media (max-width: 480px) {
+  .intake { min-height: clamp(112px, 17vh, 146px); padding-top: 23px; }
+  .eyebrow { flex-wrap: wrap; gap: 4px 8px; }
+  .viewswitch { align-self: flex-start; }
+  /* 窄屏的两盘会逼近支点：两颗气泡都收进中间留白，解释多换几行也不盖住议题。 */
+  .diagnosis-bubbles { width: 72px; }
+  .diagnosis-title-bubble { width: 72px; padding: 8px 6px 9px; border-radius: 22px 24px 23px 19px; }
+  .diagnosis-title-bubble h1 { font-size: 15px; line-height: 1.1; text-wrap: wrap; }
+  .diagnosis-copy-bubble { width: 72px; padding: 8px 5px 9px; border-radius: 21px 24px 22px 23px; transform: translateX(0) rotate(.8deg); }
+  .diagnosis-copy-bubble .verdict { font-size: 11px; line-height: 1.35; text-wrap: wrap; }
   .role-name { font-size: 12.5px; }
   .topic-name { font-size: 12.5px; }
   .seat { width: 17px; height: 21px; }

@@ -33,7 +33,12 @@ ALLOWED_CONFIDENCE = {"low", "medium", "high"}
 ALLOWED_AGENDA_TYPES = {"decision", "resolve", "co_create", "update", "sensitive"}
 ALLOWED_SYNC_REQUIREMENTS = {"required", "preferred", "none"}
 ALLOWED_MODES = {"sync", "async"}
-ALLOWED_ATTENDEE_MODES = {"full", "partial", "input_then_leave", "async", "clarify"}
+# 三种参与方式：到场、会前书面给输入、会后接收结论。刻意没有「只参加部分议题」——
+# 中途进出会打乱会议节奏。full/partial/input_then_leave/async 是改版前的旧值，仍然接受并映射。
+ALLOWED_ATTENDEE_MODES = {
+    "attend", "before", "after", "clarify",
+    "full", "partial", "input_then_leave", "async",
+}
 ALLOWED_OUTCOME_LEVELS = {"low", "medium", "high"}
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 

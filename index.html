@@ -17,10 +17,10 @@
       --tilt: 0deg;
       --fulcrum: clamp(64px, 8.5vw, 104px);
       --beam: clamp(11px, 1.4dvh, 16px);
+      --beam-overlap: clamp(2px, .32vw, 4px);
       --swing: 52px; /* 摆幅与两盘的下沉量都由 JS 按实测臂长覆盖 */
       --drop-left: 0px;
       --drop-right: 0px;
-      --beam-top: clamp(20px, 3.2vw, 42px);
       --pad-x: clamp(18px, 4.5vw, 60px);
       --ease: cubic-bezier(.34, 1.4, .64, 1);
       --display: "Baskerville", "Songti SC", "STSong", serif;
@@ -51,11 +51,10 @@
     h1, h2, h3, p { margin: 0; }
     .label { font: 11px/1 var(--mono); letter-spacing: .11em; text-transform: uppercase; opacity: .72; }
 
-    /* ---------------- 页面骨架：报告在上，天平贴底 ---------------- */
-    /* 目标仍是一屏读完，所以用 min-height 而不是 height：内容装得下就正好一屏，
-       装不下（参会者面板、草稿、窄屏）就让整页长出来滚动，而不是把内容裁掉或塞进一个看不见的内层滚动区。 */
+    /* ---------------- 页面骨架：顶部输入，中段天平，底部结算 ----------------
+       视觉路径是「先告诉我你是谁 → 看结论 → 调整方案 → 读时间账单」。天平不再贴住页面底边，
+       由自身高度和顶部留白落在首屏约 3/5～2/3 的位置；内容增多时仍允许整页自然滚动。 */
     .page { display: flex; flex-direction: column; min-height: 100dvh; padding: clamp(16px, 3.2vh, 32px) var(--pad-x) 0; }
-    /* flex-wrap：窄屏宁可让顶栏换行，也不要把里面的按钮压变形。 */
     .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; flex: none; }
     .brand { display: flex; align-items: center; gap: 9px; font: 700 12px var(--body); letter-spacing: .1em; text-transform: uppercase; }
     .brand-mark { width: 34px; height: 8px; background: var(--ink); }
@@ -63,59 +62,56 @@
     .ghost { padding: 6px 11px; border: 1.5px solid var(--ink); background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; }
     .ghost:hover, .ghost:focus-visible { background: var(--ink); color: var(--state); outline: none; }
 
-    /* 视角切换：两个视角评估的是不同的问题，所以它是一等控件，不是设置项。 */
-    .viewswitch { display: flex; border: 1.5px solid var(--ink); }
-    /* white-space: nowrap：窄屏上顶栏挤压时「组织者」会被拆成竖排单字。 */
-    .viewswitch button { padding: 6px 13px; border: 0; background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; }
-    .viewswitch button + button { border-left: 1.5px solid var(--ink); }
-    .viewswitch button[aria-pressed="true"] { background: var(--ink); color: var(--state); }
+    /* 视角切换和「组织者视角 / 参会者视角」放在同一行，导航只保留页面级操作。 */
+    .intake { display: flex; flex-direction: column; gap: clamp(9px, 1.4vh, 16px); flex: none; min-height: clamp(122px, 16vh, 156px); padding-top: clamp(26px, 5vh, 52px); }
+    .perspective-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .viewswitch { display: flex; align-items: center; gap: 2px; }
+    .viewswitch .label { margin-right: 4px; }
+    .viewswitch button { padding: 3px 8px 4px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; opacity: .62; }
+    .viewswitch button[aria-pressed="true"] { border-bottom-color: var(--ink); background: rgba(247, 243, 236, .38); opacity: 1; }
     .viewswitch button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-    /* 报告区吸收所有多余高度并可被压缩；天平和 CTA 是 flex: none，永远完整可见。
-       居中靠上下两个可伸缩的空白项实现，而不是 justify-content: center：
-       后者在内容比容器高时会把两端一起裁掉，参会者面板一出现就会切掉 h1。
-       空白项在没有余量时自然收成 0，内容改为顶对齐，超出的部分由整页滚动兜底。 */
-    .report { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start; gap: clamp(8px, 1.4vh, 16px); padding: clamp(10px, 2vh, 22px) 0; min-height: 0; }
-    .report::before, .report::after { content: ""; flex: 1 1 0; min-height: 0; }
-
-    /* 主次：结论是 h1，会议名退成一行眉标题。会议叫什么不影响该不该开。 */
+    /* 主次：会议名和视角是输入上下文；结论 h1 只在天平支点上方出现一次。 */
     .eyebrow { display: flex; align-items: baseline; gap: 9px; font-size: 12px; opacity: .82; }
     .eyebrow b { font-weight: 700; }
     .eyebrow span { font: 10px var(--mono); letter-spacing: .09em; text-transform: uppercase; opacity: .8; }
-    h1 { font: 700 clamp(34px, 6.6vw, 82px)/.92 var(--display); letter-spacing: -.045em; max-width: 22ch; }
-    .verdict { max-width: 46ch; font-size: clamp(14px, 1.6vw, 19px); }
-    .caution { max-width: 52ch; padding-left: 11px; border-left: 3px solid var(--ink); font-size: 13px; }
+    .caution { max-width: 64ch; padding-left: 10px; border-left: 3px solid var(--ink); font-size: 12px; }
 
-    /* ---------------- 当前投入 / 合理投入 ----------------
-       主区只保留用户此刻真正需要比较的两个数字；完整三方比较退到「判断依据」。 */
-    .investment { margin-left: auto; text-align: right; }
-    .investment small { font: 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; opacity: .72; }
-    .investment p { display: flex; align-items: baseline; gap: 9px; margin-top: 3px; }
-    .investment p b { font: 700 clamp(24px, 4.1vw, 46px)/1 var(--mono); letter-spacing: -.045em; }
-    .investment p span { font: 400 18px var(--display); opacity: .45; }
-    .investment p b:last-child { font-size: clamp(18px, 2.7vw, 30px); opacity: .7; }
+    /* ---------------- 参会者视角：顶部两个输入 ----------------
+       取消容器边框和内层卡片，让选择项像一行可编辑的标签；选中态用浅底 + 下沿强调。 */
+    .mine { display: flex; flex-direction: column; gap: 7px; padding: 9px 0 10px; border-top: 1px solid rgba(20, 18, 16, .34); border-bottom: 1px solid rgba(20, 18, 16, .34); }
+    .mine-facts { font: 11px var(--mono); letter-spacing: .02em; opacity: .78; }
+    .mine-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; }
+    .mine-options { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+    .mine-option { padding: 5px 10px 6px; border: 0; border-bottom: 2px solid transparent; border-radius: 999px; background: rgba(255, 255, 255, .14); font-size: 12px; opacity: .7; transition: background-color .2s ease, border-color .2s ease, opacity .2s ease; }
+    .mine-option[aria-pressed="true"] { border-bottom-color: var(--ink); background: rgba(247, 243, 236, .58); opacity: 1; font-weight: 700; }
+    /* 必要角色底线关掉的那几档要看得出「存在但此刻不成立」：删除线比单纯变淡更明确，
+       否则它和普通的未选中项长得一样，用户会以为自己点不动是页面坏了。 */
+    .mine-option:disabled { opacity: .4; text-decoration: line-through; cursor: not-allowed; }
+    .mine-option:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-    .facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
+    /* ---------------- 底部时间结算 ---------------- */
+    .settlement { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 5px 20px; margin-top: auto; padding: clamp(10px, 1.8vh, 17px) 0 clamp(14px, 2.4vh, 24px); border-top: 1px solid rgba(20, 18, 16, .34); }
+    .settlement-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; font-size: 11px; opacity: .78; }
+    .settlement-values { display: flex; align-items: baseline; gap: 10px; text-align: right; }
+    .settlement-metric { display: flex; align-items: baseline; gap: 7px; }
+    .settlement-metric small { font: 10px var(--mono); opacity: .72; }
+    .settlement-metric b { font: 700 clamp(24px, 3.5vw, 42px)/1 var(--mono); letter-spacing: -.045em; }
+    .settlement-metric-target b { font-size: clamp(18px, 2.5vw, 29px); opacity: .72; }
+    .settlement-divider { font: 400 18px var(--display); opacity: .45; }
+    .facts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; opacity: .82; }
     .facts span { white-space: nowrap; }
     .facts b { font: 700 12px var(--mono); }
 
-    /* ---------------- 参会者视角：我是否必要 ---------------- */
-    .mine { display: flex; flex-direction: column; gap: 7px; padding: clamp(9px, 1.4vh, 13px) 12px; border: 1.5px solid var(--ink); background: rgba(255, 255, 255, .16); }
-    .mine-verdict { font: 700 clamp(15px, 2vw, 21px) var(--body); }
-    .mine-reason { max-width: 54ch; font-size: 12.5px; }
-    .mine-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
-    .mine-option { padding: 4px 9px; border: 1.5px solid transparent; background: transparent; font-size: 12px; opacity: .7; }
-    .mine-option[aria-pressed="true"] { border-color: var(--ink); opacity: 1; font-weight: 700; }
-    .mine-option:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-
-    /* ---------------- 天平：梁贴底，两盘内容随倾角平移 ----------------
+    /* ---------------- 天平：落在页面中段，两盘内容随倾角平移 ----------------
        角度只写在 --tilt 上；两盘用 --drop-* 做垂直位移，文字始终保持水平。
        --swing 是梁端在最大倾角下的垂直行程，两盘靠它预留出不会互相压住的间距。
        两盘在 flow 里贴着同一条基线，再各自向下平移 (swing + sign·sin·reach)，
        平移量恒 ≥ 0，内容永远不会压到梁上。 */
-    .scale { flex: none; position: relative; margin: 0 calc(var(--pad-x) * -1); padding: 0 var(--pad-x); overflow: hidden; }
-    /* 底部要留出「最低位置」的空间：drop 最大可达 2 × swing。 */
-    .trays { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 4vw); align-items: end; min-height: clamp(128px, 18dvh, 190px); padding-bottom: calc(var(--beam-top) + var(--swing) * 2 + 10px); }
+    /* 顶部留白把支点落在首屏约 3/5～2/3；盘面与圆形支点顶部的空间仍要容纳最大摆幅。
+       横向裁到页面边缘，纵向多留出倾斜梁低端的空间，避免左/右端在容器底部被截掉。 */
+    .scale { flex: none; position: relative; min-height: clamp(290px, 35dvh, 360px); margin: clamp(28px, 5vh, 52px) calc(var(--pad-x) * -1) 0; padding: 0 var(--pad-x); overflow-x: clip; overflow-y: visible; clip-path: inset(-160px 0 -160px 0); }
+    .trays { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 4vw); align-items: end; min-height: clamp(290px, 35dvh, 360px); padding-bottom: calc(var(--fulcrum) - var(--beam-overlap) + var(--swing) * 2 + 10px); }
     .tray { display: flex; flex-direction: column; gap: 8px; min-width: 0; transition: transform .75s var(--ease); }
     .tray-left { align-items: flex-start; transform: translateY(var(--drop-left)); }
     .tray-right { align-items: flex-end; text-align: right; transform: translateY(var(--drop-right)); }
@@ -174,16 +170,25 @@
     .step:disabled { opacity: .28; cursor: not-allowed; }
     .step:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-    /* 梁比可视区更宽，倾斜后两端仍越出画面，像参考图那样被页面裁掉。
-       支点贴住页面底边，首屏要完整露出眼睛和嘴；它同时是会议状态的表情。 */
-    .beam { position: absolute; left: -5%; right: -5%; bottom: var(--beam-top); height: var(--beam); background: var(--ink); transform: rotate(var(--tilt)); transform-origin: 50% 50%; transition: transform .75s var(--ease); }
+    /* 诊断标题和解释是支点接连说出的对白：无边框、留足呼吸，用柔和阴影分开层次。 */
+    .diagnosis-bubbles { position: absolute; left: 50%; bottom: calc(var(--fulcrum) + 8px); z-index: 3; display: flex; flex-direction: column; align-items: center; width: min(62vw, 430px); transform: translateX(-50%); }
+    .diagnosis-bubble { position: relative; width: fit-content; max-width: 100%; background: var(--paper); box-shadow: 0 3px 0 rgba(20, 18, 16, .12); }
+    .diagnosis-title-bubble { padding: 14px 30px 16px; border-radius: 30px 34px 32px 25px; transform: rotate(-1deg); }
+    .diagnosis-title-bubble h1 { position: relative; z-index: 1; max-width: 100%; font: 700 clamp(18px, 2.8vw, 32px)/1.08 var(--body); letter-spacing: -.035em; text-align: center; text-wrap: balance; }
+    .diagnosis-copy-bubble { margin-top: -1px; padding: 11px 24px 13px; border-radius: 27px 31px 26px 30px; transform: translateX(12px) rotate(.8deg); }
+    .diagnosis-copy-bubble::before { content: ""; position: absolute; top: -8px; left: 27%; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); }
+    .diagnosis-copy-bubble::after { content: ""; position: absolute; left: 34%; bottom: -10px; width: 18px; height: 18px; border-radius: 0 0 6px 0; background: var(--paper); box-shadow: 3px 3px 0 rgba(20, 18, 16, .12); transform: rotate(45deg); }
+    .diagnosis-copy-bubble .verdict { position: relative; z-index: 1; max-width: 42ch; font: 500 clamp(12px, 1.2vw, 15px)/1.45 var(--body); text-align: center; text-wrap: balance; }
+
+    /* 梁比可视区更宽，倾斜后两端仍越出画面；梁线向下压入圆形一点点，但不越过梁线的上沿。 */
+    .beam { position: absolute; left: -24%; right: -24%; bottom: calc(var(--fulcrum) - var(--beam-overlap)); height: var(--beam); background: var(--ink); transform: rotate(var(--tilt)); transform-origin: 50% 50%; transition: transform .75s var(--ease); }
     .fulcrum { --look-x: 0px; --look-y: 0px; position: absolute; left: 50%; bottom: 0; width: var(--fulcrum); height: var(--fulcrum); border-radius: 50%; background: var(--ink); transform: translateX(-50%); }
     .face-eye { position: absolute; top: 25%; width: 23%; height: 20%; border-radius: 50%; background: #fff; overflow: hidden; }
     .face-eye-left { left: 22%; }
     .face-eye-right { right: 22%; }
     .face-pupil { position: absolute; left: 50%; top: 50%; width: 43%; aspect-ratio: 1; border-radius: 50%; background: var(--ink); transform: translate(calc(-50% + var(--look-x)), calc(-50% + var(--look-y))); transition: transform .16s cubic-bezier(.22, .8, .3, 1); }
     /* 三种嘴形共用统一的圆头笔画，只切换透明度，避免边缘变尖或状态切换跳变。 */
-    .face-mouth { position: absolute; left: 50%; top: 43%; width: 48%; height: 24%; overflow: visible; transform: translateX(-50%); }
+    .face-mouth { position: absolute; left: 50%; top: 49%; width: 48%; height: 24%; overflow: visible; transform: translateX(-50%); }
     .face-mouth path { fill: none; stroke: var(--state); stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity .55s var(--ease), stroke .7s ease; }
     .mouth-neutral { opacity: 1; }
     .mouth-smile, .mouth-frown { opacity: 0; }
@@ -192,13 +197,14 @@
     body[data-status="underpowered"] .mouth-neutral { opacity: 0; }
     body[data-status="underpowered"] .mouth-frown { opacity: 1; }
 
-    /* ---------------- Next step ---------------- */
-    .next { flex: none; padding: 0 0 clamp(12px, 2.2vh, 22px); }
-    .next-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    /* ---------------- Next step：表情圆形正下方的动作 ---------------- */
+    .next { flex: none; padding: clamp(8px, 1.4vh, 14px) 0 clamp(14px, 2.2vh, 22px); }
+    .next-row { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+    .next-secondary { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 9px; }
     .cta { padding: clamp(12px, 1.7vh, 17px) clamp(20px, 3vw, 34px); border: 2px solid var(--ink); background: var(--ink); color: var(--state); font: 700 clamp(14px, 1.7vw, 19px) var(--body); letter-spacing: .01em; transition: transform .2s var(--ease); }
     .cta:hover, .cta:focus-visible { transform: translateY(-2px); outline: none; }
     .cta-note { font-size: 12px; opacity: .78; }
-    .draft { margin-top: 11px; }
+    .draft { width: min(640px, 100%); margin: 11px auto 0; }
     .draft textarea { display: block; width: min(640px, 100%); min-height: 118px; padding: 12px; border: 1.5px solid var(--ink); background: rgba(255, 255, 255, .82); resize: vertical; font: 13px/1.6 var(--body); }
     .draft-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
 
@@ -224,15 +230,26 @@
     .foot { margin-top: clamp(18px, 3vh, 30px); padding-top: 12px; border-top: 1.5px solid var(--ink); font: 10px var(--mono); letter-spacing: .05em; opacity: .74; }
 
     @media (max-width: 900px) {
-      .investment { margin-left: 0; text-align: left; }
+      .settlement { grid-template-columns: 1fr; }
+      .settlement-values { justify-self: start; text-align: left; }
     }
     @media (max-width: 720px) {
       .trays { grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 10px); }
+      .perspective-row { align-items: flex-start; flex-direction: column; gap: 8px; }
       .role-need, .topic-lock { display: none; }
       .evidence { grid-template-columns: 1fr; }
     }
     /* 整页滚动现在是基础行为（见 styles.css / .page 的 min-height），窄屏只需要缩字号。 */
     @media (max-width: 480px) {
+      .intake { min-height: clamp(112px, 17vh, 146px); padding-top: 23px; }
+      .eyebrow { flex-wrap: wrap; gap: 4px 8px; }
+      .viewswitch { align-self: flex-start; }
+      /* 窄屏的两盘会逼近支点：两颗气泡都收进中间留白，解释多换几行也不盖住议题。 */
+      .diagnosis-bubbles { width: 72px; }
+      .diagnosis-title-bubble { width: 72px; padding: 8px 6px 9px; border-radius: 22px 24px 23px 19px; }
+      .diagnosis-title-bubble h1 { font-size: 15px; line-height: 1.1; text-wrap: wrap; }
+      .diagnosis-copy-bubble { width: 72px; padding: 8px 5px 9px; border-radius: 21px 24px 22px 23px; transform: translateX(0) rotate(.8deg); }
+      .diagnosis-copy-bubble .verdict { font-size: 11px; line-height: 1.35; text-wrap: wrap; }
       .role-name { font-size: 12.5px; }
       .topic-name { font-size: 12.5px; }
       .seat { width: 17px; height: 21px; }
@@ -248,64 +265,38 @@
     <header class="topbar">
       <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>meetre</span></div>
       <div class="topbar-actions">
-        <div class="viewswitch" role="group" aria-label="切换评估视角">
-          <button type="button" data-perspective="organizer" aria-pressed="true">组织者</button>
-          <button type="button" data-perspective="attendee" aria-pressed="false">参会者</button>
-        </div>
         <button class="ghost" id="resetButton" type="button">恢复原方案</button>
         <button class="ghost" id="detailsButton" type="button" aria-expanded="false">判断依据</button>
       </div>
     </header>
 
-    <section class="report">
-      <p class="eyebrow"><span id="perspectiveTag">组织者视角</span><b id="meetingTitle">—</b></p>
-      <h1 id="headline">—</h1>
-      <p class="verdict" id="statusLine" aria-live="polite">—</p>
-      <p class="caution" id="cautionLine" hidden></p>
-
-      <div class="investment">
-        <small>当前投入 <span aria-hidden="true">/</span> 合理投入</small>
-        <p><b id="metricCost">—</b><span>/</span><b id="metricBudget">—</b></p>
+    <section class="intake" aria-label="会议与参与方式">
+      <div class="perspective-row">
+        <p class="eyebrow"><span id="perspectiveTag">组织者视角</span><b id="meetingTitle">—</b></p>
+        <div class="viewswitch" role="group" aria-label="切换评估视角">
+          <span class="label">视角</span>
+          <button type="button" data-perspective="organizer" aria-pressed="true">组织者</button>
+          <button type="button" data-perspective="attendee" aria-pressed="false">参会者</button>
+        </div>
       </div>
-      <p class="facts">
-        <span>同步 <b id="metricPeople">—</b></span>
-        <span>时长 <b id="metricDuration">—</b></span>
-        <span id="metricSavedLabel">返还时间</span><span><b id="metricSaved">—</b></span>
-      </p>
 
-      <!-- 判断和理由已经由 h1 和它下面那句话说完了，这个面板只负责「我怎么落地」：
-           我是谁、议程里有多少和我有关、我选择哪种参与方式。 -->
+      <!-- 参会者先填身份与贡献，结论和操作都会据此更新；这里不做卡片套卡片。 -->
       <div class="mine" id="mineRow" hidden>
-        <p class="mine-verdict" id="mineVerdict">—</p>
         <div class="mine-controls">
           <span class="label">我的角色</span>
-          <span id="mineRoles"></span>
+          <span class="mine-options" id="mineRoles"></span>
         </div>
         <div class="mine-controls">
-          <span class="label">我的参与方式</span>
-          <button class="mine-option" type="button" data-attendee-mode="full" aria-pressed="false">全程参加</button>
-          <button class="mine-option" type="button" data-attendee-mode="partial" aria-pressed="false">只参加相关议题</button>
-          <button class="mine-option" type="button" data-attendee-mode="input_then_leave" aria-pressed="false">先给输入</button>
-          <button class="mine-option" type="button" data-attendee-mode="async" aria-pressed="false">异步接收结果</button>
-          <span id="mineTime" class="label"></span>
+          <span class="label">我的贡献</span>
+          <span class="mine-options">
+            <button class="mine-option" type="button" data-contribution="decide" aria-pressed="false">现场决定或对齐分歧</button>
+            <button class="mine-option" type="button" data-contribution="input" aria-pressed="false">提供信息或材料</button>
+            <button class="mine-option" type="button" data-contribution="receive" aria-pressed="false">只需要知道结论</button>
+          </span>
         </div>
+        <p class="mine-facts" id="mineFacts" aria-live="polite">—</p>
       </div>
-    </section>
-
-    <section class="next">
-      <div class="next-row">
-        <button class="cta" id="ctaButton" type="button">—</button>
-        <button class="ghost" id="ctaAlternate" type="button" hidden></button>
-        <span class="cta-note" id="ctaNote"></span>
-      </div>
-      <div class="draft" id="draftBox" hidden>
-        <textarea id="draftText" aria-label="可编辑的文案草稿"></textarea>
-        <div class="draft-actions">
-          <button class="ghost" id="copyDraftButton" type="button">复制</button>
-          <button class="ghost" id="reviewButton" type="button">带回 Agent 复评</button>
-          <button class="ghost" id="closeDraftButton" type="button">收起</button>
-        </div>
-      </div>
+      <p class="caution" id="cautionLine" hidden></p>
     </section>
 
     <section class="scale" id="scale" aria-label="会议天平">
@@ -313,11 +304,20 @@
         <div class="tray tray-left">
           <div class="tray-head"><b>谁来</b><span id="leftCaption">—</span></div>
           <div class="tray-body" id="roleTray"></div>
-          <p class="merge-hint" id="mergeHint" aria-live="polite">拖动单人角色的把手到另一角色，即可由同一人兼任</p>
+          <p class="merge-hint" id="mergeHint" aria-live="polite">拖动角色的把手到另一角色，即可合并整个角色</p>
         </div>
         <div class="tray tray-right">
           <div class="tray-head"><span id="rightCaption">—</span><b>做什么</b></div>
           <div class="tray-body" id="topicTray"></div>
+        </div>
+      </div>
+      <!-- 诊断标题和解释是支点接连说出的两句对白，保留 h1 语义。 -->
+      <div class="diagnosis-bubbles">
+        <div class="diagnosis-bubble diagnosis-title-bubble">
+          <h1 id="headline">—</h1>
+        </div>
+        <div class="diagnosis-bubble diagnosis-copy-bubble">
+          <p class="verdict" id="statusLine" aria-live="polite">—</p>
         </div>
       </div>
       <div class="beam" id="beam" aria-hidden="true"></div>
@@ -331,6 +331,41 @@
           <path class="mouth-frown" d="M7 16C13 6 35 6 41 16"></path>
         </svg>
       </div>
+    </section>
+
+    <section class="next">
+      <div class="next-row">
+        <button class="cta" id="ctaButton" type="button">—</button>
+        <div class="next-secondary">
+          <button class="ghost" id="ctaAlternate" type="button" hidden></button>
+          <span class="cta-note" id="ctaNote"></span>
+        </div>
+      </div>
+      <div class="draft" id="draftBox" hidden>
+        <textarea id="draftText" aria-label="可编辑的文案草稿"></textarea>
+        <div class="draft-actions">
+          <button class="ghost" id="copyDraftButton" type="button">复制</button>
+          <button class="ghost" id="reviewButton" type="button">带回 Agent 复评</button>
+          <button class="ghost" id="closeDraftButton" type="button">收起</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="settlement" aria-label="时间结算">
+      <div class="settlement-heading">
+        <span class="label">时间结算</span>
+        <span>当前投入 <span aria-hidden="true">/</span> 合理投入</span>
+      </div>
+      <div class="settlement-values" aria-label="当前投入与合理投入">
+        <span class="settlement-metric"><small>当前</small><b id="metricCost">—</b></span>
+        <span class="settlement-divider" aria-hidden="true">/</span>
+        <span class="settlement-metric settlement-metric-target"><small>合理</small><b id="metricBudget">—</b></span>
+      </div>
+      <p class="facts">
+        <span>同步 <b id="metricPeople">—</b></span>
+        <span>时长 <b id="metricDuration">—</b></span>
+        <span id="metricSavedLabel">返还时间</span><span><b id="metricSaved">—</b></span>
+      </p>
     </section>
   </main>
 
@@ -406,9 +441,20 @@
         async: "建议异步沟通",
         underpowered: "调过头了"
       };
-      /* 参会者关心的不是「这场会该不该开」，而是「我在不在必要名单里」，
-         所以两个视角的大标题问的是两个不同的问题。 */
-      const NEED_TITLES = { essential: "你必须在场", partial: "你只需要来一段", optional: "你不必到场" };
+      /* 参会者关心的不是「这场会该不该开」，而是「我该用哪种方式参与」，
+         所以两个视角的大标题问的是两个不同的问题。
+
+         方式只有三种：到场、会前书面给输入、会后接收结论。刻意不提供「只参加相关议题」——
+         中途进出会打乱会议节奏，现实里也几乎没人真的执行。
+         判断由两个输入推导：我是哪些角色（决定必要底线），我的贡献能不能只用文字表达。 */
+      const CONTRIBUTION_LABELS = { decide: "现场决定或对齐分歧", input: "提供信息或材料", receive: "只需要知道结论" };
+      const PLAN_BY_CONTRIBUTION = { decide: "attend", input: "before", receive: "after" };
+      const PLAN_TITLES = { attend: "你需要到场", before: "会前给输入就够了", after: "会后接收结论就够了" };
+      // Agent 的 recommendedMode 只给「我的贡献」一个初值；同时兼容改版前的四个旧值。
+      const CONTRIBUTION_FROM_MODE = {
+        attend: "decide", before: "input", after: "receive", clarify: "input",
+        full: "decide", partial: "input", input_then_leave: "input", async: "receive"
+      };
       const SYNC_LOCK_LABELS = { required: "必须同步", preferred: "建议同步", none: "可异步" };
       const OUTCOME_LABELS = { low: "局部", medium: "团队", high: "关键" };
 
@@ -519,7 +565,7 @@
         if (verdict.kind === "async" && agenda.some((item) => agendaModes[item.id] !== "async")) fail("recommendation.agendaModes", "async 处方不能推荐同步议题");
         string(recommendation.why, "recommendation.why", true, 300);
         if (next.perspective === "attendee") {
-          const plan = object(next.attendeePlan, "attendeePlan"); if (!roleIds.has(plan.currentRoleId)) fail("attendeePlan.currentRoleId", "必须引用已声明角色"); string(plan.currentRoleId, "attendeePlan.currentRoleId", true, 32); ids(plan.relevantAgendaIds, "attendeePlan.relevantAgendaIds").forEach((id) => { if (!agendaIds.has(id)) fail("attendeePlan.relevantAgendaIds", `未知议题 ${id}`); }); enumeration(plan.recommendedMode, "attendeePlan.recommendedMode", ["full", "partial", "input_then_leave", "async", "clarify"]); integer(plan.recommendedMinutes, "attendeePlan.recommendedMinutes", 0, 480); string(plan.message, "attendeePlan.message", true, 700);
+          const plan = object(next.attendeePlan, "attendeePlan"); if (!roleIds.has(plan.currentRoleId)) fail("attendeePlan.currentRoleId", "必须引用已声明角色"); string(plan.currentRoleId, "attendeePlan.currentRoleId", true, 32); ids(plan.relevantAgendaIds, "attendeePlan.relevantAgendaIds").forEach((id) => { if (!agendaIds.has(id)) fail("attendeePlan.relevantAgendaIds", `未知议题 ${id}`); }); enumeration(plan.recommendedMode, "attendeePlan.recommendedMode", Object.keys(CONTRIBUTION_FROM_MODE)); integer(plan.recommendedMinutes, "attendeePlan.recommendedMinutes", 0, 480); string(plan.message, "attendeePlan.message", true, 700);
         } else if (next.attendeePlan !== null) object(next.attendeePlan, "attendeePlan");
         return next;
       }
@@ -535,13 +581,13 @@
       /* ---------------- 可变状态 ----------------
          view 是用户当前选的视角，可以和 data.perspective 不同：同一张秤票，
          组织者问「这场会该怎么开」，参会者问「我该不该来」。
-         state.merges 记录「哪个角色其实和另一个角色是同一个人」：absorbed -> host。 */
+         state.merges 记录「哪个角色整体并入另一个角色」：absorbed -> host。 */
       let data = loadHash() || loadEmbedded();
       const originalData = clone(data);
       let state = { roles: clone(data.roles), agenda: clone(data.agenda), merges: {} };
       let view = data.perspective === "attendee" ? "attendee" : "organizer";
       let myRoleIds = [defaultMyRoleId()];
-      let attendeeMode = data.attendeePlan?.recommendedMode || "async";
+      let myContribution = defaultContribution();
       let mergePickedRoleId = null;
       let mergeDraggingRoleId = null;
       let draftOpen = false;
@@ -552,6 +598,11 @@
         if (data.attendeePlan?.currentRoleId) return data.attendeePlan.currentRoleId;
         // 没有 attendeePlan 时假设提问的人来自人数最多的那个角色（通常是知会者这类大桶）。
         return data.roles.reduce((best, role) => (role.originalCount > best.originalCount ? role : best), data.roles[0]).id;
+      }
+
+      // Agent 建议的参与方式只是「我的贡献」的初值，用户随时可以自己改。
+      function defaultContribution() {
+        return CONTRIBUTION_FROM_MODE[data.attendeePlan?.recommendedMode] || "receive";
       }
 
       const roleById = (id) => state.roles.find((role) => role.id === id);
@@ -571,11 +622,11 @@
       // 顺着合并关系找到真正出席的那个角色行。
       const hostRoleOf = (id) => roleById(state.merges[id] || id);
 
-      /* 合并只在「确实是一个人」时成立，所以只允许并入单人角色，
-         也不允许套娃（A 并入 B、B 再并入 C 会让 A 的宿主消失）。 */
+      /* 合并是角色级动作：源角色的整组人数一起并入宿主，不要求源角色只有 1 人。
+         也不允许套娃（A 并入 B、B 再并入 C 会让 A 的宿主关系变得不清楚）。 */
       function mergeCandidates(roleId) {
         const role = roleById(roleId);
-        if (!role || role.originalCount !== 1 || isHost(roleId)) return [];
+        if (!role || isHost(roleId)) return [];
         return state.roles.filter((other) => other.id !== roleId && !isMerged(other.id));
       }
 
@@ -659,33 +710,39 @@
         return { roles, cost, targetCost, budgetCost, status, problems, cautions: cautions(), originalCost, saved: originalCost - cost.total, mine: myAssessment() };
       }
 
-      /* ---------------- 参会者：我是否必要 ----------------
-         参会者要的不是全盘处方，而是一条能拿去回复的判断：我在不在底线名单里。 */
+      /* ---------------- 参会者：我该用哪种方式参与 ----------------
+         参会者要的不是全盘处方，而是一条能拿去回复的结论。 */
       function myTopics() {
         const plan = data.attendeePlan;
         const fromPlan = plan && myRoleIds.includes(plan.currentRoleId) ? plan.relevantAgendaIds : [];
         return syncTopics().filter((item) => item.requiredRoleIds.some((id) => myRoleIds.includes(id)) || fromPlan.includes(item.id));
       }
 
+      /* 方式由两件事推导，不再让用户从四个选项里挑一个自己也说不清的组合：
+         floor —— 议程是否把我列为必要角色，这是底线，压过自我评估；
+         myContribution —— 我的贡献能不能只用文字表达。
+         到场就意味着待完整场次：没有「只参加相关议题」这一档。 */
       function myAssessment() {
         const mineRoles = myRoleIds.map(roleById).filter(Boolean);
         const topics = myTopics();
         const required = topics.filter((item) => item.requiredRoleIds.some((id) => myRoleIds.includes(id) && (roleById(id)?.requiredMin || 0) > 0));
-        const minutes = topics.reduce((sum, item) => sum + item.syncMinutes, 0);
         const total = syncTopics().reduce((sum, item) => sum + item.syncMinutes, 0);
-        const need = required.length ? (minutes < total ? "partial" : "essential") : (topics.length ? "partial" : "optional");
-        return { roles: mineRoles, topics, required, minutes, total, need, syncCount: syncTopics().length };
+        const floor = required.length > 0;
+        const plan = !syncTopics().length ? "after" : floor ? "attend" : PLAN_BY_CONTRIBUTION[myContribution];
+        return { roles: mineRoles, topics, required, floor, plan, minutes: plan === "attend" ? total : 0, total, syncCount: syncTopics().length };
       }
 
       function myReason(mine) {
-        if (mine.need === "essential") return `“${joinTitles(mine.required, "")}”把你列为必要角色，而且覆盖了整场会议的时间，缺你这些议题就得改期。`;
-        if (mine.need === "partial") {
-          const head = mine.required.length
-            ? `你在“${joinTitles(mine.required, "")}”里是必要角色`
-            : `“${joinTitles(mine.topics, "")}”和你相关，但没有把你列为必要角色`;
-          return `${head}，这部分约 ${formatMinutes(mine.minutes)}；其余 ${formatMinutes(Math.max(0, mine.total - mine.minutes))} 不需要你在场。`;
+        if (mine.plan === "attend") {
+          return mine.floor
+            ? `“${joinTitles(mine.required, "")}”把你列为必要角色，缺你就得改期，全程约 ${formatMinutes(mine.total)}。`
+            : `没有议题把你列为必要角色，但你要现场决定或对齐分歧，这件事只能在会上做，全程约 ${formatMinutes(mine.total)}。`;
         }
-        return `当前同步议程里没有任何议题把${joinLabels(mine.roles, "你的角色")}列为必要角色，你可以只接收结论。`;
+        if (mine.plan === "before") {
+          const scope = mine.topics.length ? `“${joinTitles(mine.topics, "")}”` : "议程";
+          return `你对${scope}的贡献是信息和材料，写成文字在会前发出就行，省下你这边 ${formatMinutes(mine.total)}。`;
+        }
+        return `没有议题需要${joinLabels(mine.roles, "你的角色")}现场表态，等一份结论就够了，省下你这边 ${formatMinutes(mine.total)}。`;
       }
 
       /* ---------------- 配置变更 ----------------
@@ -725,10 +782,10 @@
       function resetPlan() {
         data = clone(originalData);
         state = { roles: clone(originalData.roles), agenda: clone(originalData.agenda), merges: {} };
-        attendeeMode = data.attendeePlan?.recommendedMode || "async";
         mergePickedRoleId = null;
         mergeDraggingRoleId = null;
         myRoleIds = [defaultMyRoleId()];
+        myContribution = defaultContribution();
         closeDraft();
         render();
       }
@@ -753,9 +810,10 @@
         render();
       }
 
-      // 参会者的「按我的方式落地」：把自己的角色按选定参与方式移到对应桶里。
-      function applyMyMode() {
-        const bucket = attendeeMode === "async" ? "asyncCount" : "syncCount";
+      /* 参会者的「按我的方式落地」：把自己的角色移到对应的桶里。
+         到场 → 会议中；会前/会后异步 → 异步知会，两者都不占会议时间，区别只在文案里。 */
+      function applyMyPlan(plan) {
+        const bucket = plan === "attend" ? "syncCount" : "asyncCount";
         myRoleIds.map(hostRoleOf).filter(Boolean).forEach((role) => {
           BUCKETS.filter((key) => key !== bucket).forEach((key) => {
             while (role[key] > 0 && role[bucket] < role.originalCount) { role[key] -= 1; role[bucket] += 1; }
@@ -774,11 +832,18 @@
         if (snap.status === "underpowered") {
           return { label: "补回必要底线", note: "补齐后才会生成可发出的文案。", action: repairBreaches };
         }
+        /* 参会者的主按钮就是推导出来的那一种方式，次选统一是「按这个方式落地」：
+           先看文案再决定要不要真的改配置。到场态没有次选——落地就是维持现状。 */
         if (!organizer) {
-          // 参会者被判定为不必要时，主按钮是请辞；否则是确认自己的参与方式。
-          if (snap.mine.need === "optional") return { label: "请辞并提议异步", note: "没有议题把你列为必要角色。", action: openDraft, alternate: { label: "仍然参加全程", action: () => { attendeeMode = "full"; applyMyMode(); } } };
-          if (snap.mine.need === "partial") return { label: "提议只参加相关议题", note: `与你相关的部分约 ${formatMinutes(snap.mine.minutes)}。`, action: openDraft, alternate: { label: "按这个方式落地", action: applyMyMode } };
-          return { label: "确认参加", note: `你是必要角色，约 ${formatMinutes(snap.mine.minutes || snap.cost.syncMinutes)}。`, action: openDraft };
+          const apply = { label: "按这个方式落地", action: () => { applyMyPlan(snap.mine.plan); openDraft(); } };
+          if (snap.mine.plan === "attend") {
+            const why = snap.mine.floor ? "议程把你列为必要角色" : "你要现场决定或对齐分歧";
+            return { label: "确认到场", note: `${why}，全程约 ${formatMinutes(snap.mine.total)}。`, action: openDraft };
+          }
+          if (snap.mine.plan === "before") {
+            return { label: "改成会前异步给输入", note: `写成文字发出，省下 ${formatMinutes(snap.mine.total)}。`, action: openDraft, alternate: apply };
+          }
+          return { label: "改成会后接收结论", note: `不到场，省下 ${formatMinutes(snap.mine.total)}。`, action: openDraft, alternate: apply };
         }
         if (snap.status === "overweight") {
           // 组织者的主按钮是瘦身，但仍留一条「就按现在这样发」的出口——meetre 是建议，不是拦路。
@@ -804,7 +869,8 @@
           readers: snap.roles.filter((role) => role.asyncCount > 0).map((role) => role.label),
           myRoles: joinLabels(mine.roles, "我"),
           mineNames: joinTitles(mine.topics, "与我相关的议题"),
-          mineMinutes: mine.minutes || data.attendeePlan?.recommendedMinutes || 0,
+          mineTopicCount: mine.topics.length,
+          mineTotal: formatMinutes(mine.total),
           duration: formatMinutes(snap.cost.syncMinutes),
           saved: formatPersonMinutes(snap.saved),
           before: formatPersonMinutes(snap.originalCost),
@@ -812,17 +878,9 @@
         };
       }
 
-      // 参会者在确认参加时的承诺，随「我的参与方式」变化。
-      function commitmentLine(facts, snap) {
-        if (attendeeMode === "full") return `我会参加全程，约 ${facts.duration}。`;
-        if (attendeeMode === "async") return "我这次不参加同步会，请把结论同步给我，需要我确认的部分我会书面回复。";
-        const minutes = formatMinutes(facts.mineMinutes);
-        if (attendeeMode === "input_then_leave") return `我会在会前把输入写好，会议中只参加「${facts.mineNames}」，确认完就先离开，约 ${minutes}。`;
-        return `我参加「${facts.mineNames}」这部分，约 ${minutes}，其余部分不需要我在场。`;
-      }
-
-      /* view + status/need → 文案行。返回数组，空串会被过滤掉。
-         组织者的文案是邀请或更新；参会者的文案是回给组织者的一句话。 */
+      /* view + status/plan → 文案行。返回数组，空串会被过滤掉。
+         组织者的文案是邀请或更新；参会者的文案是回给组织者的一句话。
+         三条参会者草稿都不提「中途离开」：到场就是全程，不到场就走书面。 */
       const DRAFTS = {
         "organizer:async": (f, snap) => [
           `主题：${f.title}（改为异步）`, "",
@@ -842,29 +900,30 @@
           f.asyncTopics.length ? `\n以下内容已改为会前异步阅读，不占用会议时间：${joinTitles(f.asyncTopics, "")}` : "", "",
           "如果你认为自己不必到场，直接告诉我，我把结果同步给你。"
         ],
-        "attendee:optional": (f, snap) => [
-          `关于「${f.title}」，我看了议程：现在没有议题需要${f.myRoles}实时到场。`, "",
-          "我的建议是把结论同步给我，需要我确认的部分我会书面回复。",
-          snap.status === "async" ? "整场会的内容其实都可以改成一条书面更新。" : `这样能少占我这边 ${formatMinutes(snap.cost.syncMinutes)}。`, "",
+        "attendee:after": (f, snap) => [
+          `关于「${f.title}」，我看了议程：现在没有议题需要${f.myRoles}现场表态。`, "",
+          "我这次就不占会议时间了，请会后把结论同步给我，需要我确认的部分我会书面回复。",
+          snap.status === "async" ? "整场会的内容其实都可以改成一条书面更新。" : `这样能少占我这边 ${f.mineTotal}。`, "",
           "如果后面出现需要当场决定或需要现场收敛分歧的部分，请告诉我具体要做的决定，我一定到场。"
         ],
-        "attendee:partial": (f) => [
-          `关于「${f.title}」，我确认一下我的参与范围。`, "",
-          `我这边真正需要参与的是：${f.mineNames}，大约 ${formatMinutes(f.mineMinutes)}。`,
-          `其余部分不需要我在场，把结论同步给我就行。`,
-          f.asyncTopics.length ? `另外「${joinTitles(f.asyncTopics, "")}」我觉得可以改成会前异步阅读。` : "", "",
-          "如果你觉得我理解有偏差，或者有我没看到的同步理由，告诉我，我按你的安排来。"
+        "attendee:before": (f) => [
+          `关于「${f.title}」，我这边的贡献是信息和材料，不需要占会议时间。`, "",
+          // 没有议题与我相关时不能凭空写出议题名：那是文案在发明会议里不存在的事实。
+          f.mineTopicCount ? `我会在会前把「${f.mineNames}」需要的输入写成文字发给你，会上直接用。` : "我会在会前把我这边的输入写成文字发给你，会上直接用。",
+          `这样我就不参加同步会了，省下我这边 ${f.mineTotal}；会后把结论同步给我就行。`,
+          f.asyncTopics.length ? `另外「${joinTitles(f.asyncTopics, "")}」我觉得也可以改成会前异步阅读。` : "", "",
+          "如果你觉得有必须我当场回答的问题，告诉我是哪一条，我到场。"
         ],
-        "attendee:default": (f, snap) => [
-          `关于「${f.title}」，我确认一下我的参与方式。`, "",
-          commitmentLine(f, snap), "",
-          "如果还有需要我提前准备的材料，告诉我。"
+        "attendee:attend": (f) => [
+          `关于「${f.title}」，我确认参加，全程约 ${f.mineTotal}。`, "",
+          f.mineTopicCount ? `我这边需要现场处理的是：${f.mineNames}。` : "我这边需要在会上现场决定或对齐分歧。", "",
+          "如果还有需要我提前准备的材料，告诉我，我会前写好。"
         ]
       };
 
       function draftText(snap) {
-        const key = view === "attendee" ? `attendee:${snap.mine.need}` : `organizer:${snap.status}`;
-        const build = DRAFTS[key] || DRAFTS[view === "attendee" ? "attendee:default" : "organizer:default"];
+        const key = view === "attendee" ? `attendee:${snap.mine.plan}` : `organizer:${snap.status}`;
+        const build = DRAFTS[key] || DRAFTS[view === "attendee" ? "attendee:attend" : "organizer:default"];
         return build(draftFacts(snap), snap).filter((line) => line !== "").join("\n");
       }
 
@@ -876,7 +935,7 @@
           `meetre｜${data.meeting.title}`,
           `视角：${view === "attendee" ? "参会者" : "组织者"}`,
           `当前状态：${STATUS_TITLES[snap.status]}`,
-          view === "attendee" ? `我的角色：${joinLabels(snap.mine.roles, "未指定")}，判断：${NEED_TITLES[snap.mine.need]}` : "",
+          view === "attendee" ? `我的角色：${joinLabels(snap.mine.roles, "未指定")}，我的贡献：${CONTRIBUTION_LABELS[myContribution]}，结论：${PLAN_TITLES[snap.mine.plan]}` : "",
           `集体成本：${formatPersonMinutes(snap.cost.total)}（原始 ${formatPersonMinutes(snap.originalCost)}）`,
           `同步人数：${snap.cost.syncPeople}，会议时长：${formatMinutes(snap.cost.syncMinutes)}`,
           `角色：${roles.join("；")}`,
@@ -909,7 +968,7 @@
         return seat;
       }
 
-      /* 合并是一个空间动作：拖动单人角色的把手到宿主行。
+      /* 合并是一个空间动作：拖动角色的把手到宿主行，整个源角色一起并入。
          点击把手后再点目标行是同一动作的触控/键盘后备，不再使用抽象的下拉菜单。 */
       function mergeHandle(role) {
         if (!mergeCandidates(role.id).length) return null;
@@ -919,8 +978,8 @@
         handle.draggable = true;
         handle.dataset.mergeSource = role.id;
         text(handle, "⠿");
-        handle.title = "拖到另一个角色，由同一人兼任";
-        handle.setAttribute("aria-label", `拖动“${role.label}”到另一个角色进行合并；也可按下后再选择目标`);
+        handle.title = "拖到另一个角色，合并整个角色";
+        handle.setAttribute("aria-label", `拖动“${role.label}”到另一个角色，合并整个角色；也可按下后再选择目标`);
         let dragged = false;
         handle.addEventListener("dragstart", (event) => {
           dragged = true;
@@ -952,7 +1011,7 @@
         const source = sourceId ? roleById(sourceId) : null;
         text($("mergeHint"), source
           ? `把“${source.label}”放到高亮角色；Esc 取消`
-          : "拖动单人角色的把手到另一角色，即可由同一人兼任");
+          : "拖动角色的把手到另一角色，即可合并整个角色");
       }
 
       function wireMergeTarget(row) {
@@ -1113,9 +1172,9 @@
         arms.forEach((arm) => root.setProperty(arm.variable, `${(swing + arm.fall).toFixed(1)}px`));
       }
 
-      /* ---------------- 渲染：上方报告区 ----------------
-         主次顺序：结论（h1）→ 一句话理由 → 当前/合理投入 → 零碎事实。
-         会议名退到眉标题：它标识这场会，但不影响该不该开。 */
+      /* ---------------- 渲染：顶部上下文与底部结算 ----------------
+         顶部只放视角、会议名和参会者输入；结论 h1 由天平支点上方的气泡承载，
+         当前/合理投入与零碎事实由页面底部的结算区承载。 */
       // 这句话接在 h1 后面，所以不重复 h1 的措辞——重复等于又堆一层没有主次的字。
       function statusSentence(snap) {
         if (snap.status === "underpowered") return "这个配置已经破了价值底线，先补回来再往下走。";
@@ -1124,10 +1183,10 @@
         return "必要角色齐全，时长和产出对得上。";
       }
 
-      // 参会者的大标题回答的是「我该不该来」，红色态仍优先说底线被破了。
+      // 参会者的大标题回答的是「我该用哪种方式参与」，红色态仍优先说底线被破了。
       function headline(snap) {
         if (view !== "attendee" || snap.status === "underpowered") return STATUS_TITLES[snap.status];
-        return NEED_TITLES[snap.mine.need];
+        return PLAN_TITLES[snap.mine.plan];
       }
 
       function attendeeSentence(snap) {
@@ -1207,7 +1266,7 @@
       }
 
       /* ---------------- 渲染：参会者面板 ----------------
-         参会者要先确认「我是谁」，判断才有意义，所以角色是可勾选的（一人可兼多个角色）。 */
+         参会者要先确认「我是谁」，结论才有意义，所以角色是可勾选的（一人可兼多个角色）。 */
       function renderMyRoles() {
         const holder = $("mineRoles");
         holder.replaceChildren();
@@ -1220,9 +1279,10 @@
           button.setAttribute("aria-pressed", String(active));
           text(button, role.label);
           button.addEventListener("click", () => {
-            // 至少保留一个角色：没有角色就没有「我是否必要」这个问题。
+            // 至少保留一个角色：没有角色就没有「我该怎么参与」这个问题。
             if (active && myRoleIds.length > 1) myRoleIds = myRoleIds.filter((id) => id !== role.id);
             else if (!active) myRoleIds = [...myRoleIds, role.id];
+            closeDraft(); // 换角色可能换结论，挂着的草稿是上一个结论写的
             render();
           });
           holder.append(button);
@@ -1233,15 +1293,19 @@
         const visible = view === "attendee";
         $("mineRow").hidden = !visible;
         if (!visible) return;
-        // 判断本身在 h1，理由在它下面那句；这里只给能落地的事实：我是谁、议程里有几条和我有关。
-        const relevant = `${snap.mine.topics.length}/${snap.mine.syncCount} 个同步议题与你相关`;
-        text($("mineVerdict"), `${joinLabels(snap.mine.roles, "未指定角色")}｜${relevant}`);
         renderMyRoles();
-        document.querySelectorAll("[data-attendee-mode]").forEach((button) => {
-          button.setAttribute("aria-pressed", String(button.dataset.attendeeMode === attendeeMode));
+        /* 被议程列为必要角色时，「我的贡献」不能把结论改成异步：底线压过自我评估。
+           禁用而不是隐藏，用户才能看到「这个选择存在，但此刻不成立」。 */
+        const shown = snap.mine.floor ? "decide" : myContribution; // 用户自己的选择仍留在 myContribution 里，换角色后会回来
+        document.querySelectorAll("[data-contribution]").forEach((button) => {
+          const key = button.dataset.contribution;
+          button.setAttribute("aria-pressed", String(key === shown));
+          button.disabled = snap.mine.floor && key !== "decide";
+          button.title = button.disabled ? `${joinTitles(snap.mine.required, "议程")}把你列为必要角色，这一档暂不成立` : CONTRIBUTION_LABELS[key];
         });
-        const minutes = attendeeMode === "full" ? snap.cost.syncMinutes : attendeeMode === "async" ? 0 : snap.mine.minutes;
-        text($("mineTime"), minutes ? `我的占用 ${formatMinutes(minutes)}` : "我不占用会议时间");
+        // 结论在 h1、理由在导语，这一行只留可核对的事实：几条议题与我相关、我占多少时间。
+        const relevant = `${snap.mine.topics.length}/${snap.mine.syncCount} 个同步议题与你相关`;
+        text($("mineFacts"), `${relevant}｜${snap.mine.minutes ? `我的占用 ${formatMinutes(snap.mine.minutes)}` : "我不占用会议时间"}`);
       }
 
       /* ---------------- 渲染入口 ---------------- */
@@ -1294,6 +1358,8 @@
         draftKind = "message";
         document.body.dataset.drafting = "false";
         $("draftBox").hidden = true;
+        // 清掉文本，别让一份为旧结论写的草稿留在隐藏的框里等着被下次打开时看见。
+        $("draftText").value = "";
       }
       function copyText(value, button) {
         const original = button.textContent;
@@ -1365,8 +1431,9 @@
       document.querySelectorAll("[data-perspective]").forEach((button) => {
         button.addEventListener("click", () => setView(button.dataset.perspective));
       });
-      document.querySelectorAll("[data-attendee-mode]").forEach((button) => {
-        button.addEventListener("click", () => { attendeeMode = button.dataset.attendeeMode; render(); });
+      // 换贡献等于换结论，挂着的草稿是上一个结论写的，必须收起。
+      document.querySelectorAll("[data-contribution]").forEach((button) => {
+        button.addEventListener("click", () => { myContribution = button.dataset.contribution; closeDraft(); render(); });
       });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && mergePickedRoleId) {

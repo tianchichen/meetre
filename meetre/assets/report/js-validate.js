@@ -73,7 +73,7 @@ function basicValidate(next) {
   if (verdict.kind === "async" && agenda.some((item) => agendaModes[item.id] !== "async")) fail("recommendation.agendaModes", "async 处方不能推荐同步议题");
   string(recommendation.why, "recommendation.why", true, 300);
   if (next.perspective === "attendee") {
-    const plan = object(next.attendeePlan, "attendeePlan"); if (!roleIds.has(plan.currentRoleId)) fail("attendeePlan.currentRoleId", "必须引用已声明角色"); string(plan.currentRoleId, "attendeePlan.currentRoleId", true, 32); ids(plan.relevantAgendaIds, "attendeePlan.relevantAgendaIds").forEach((id) => { if (!agendaIds.has(id)) fail("attendeePlan.relevantAgendaIds", `未知议题 ${id}`); }); enumeration(plan.recommendedMode, "attendeePlan.recommendedMode", ["full", "partial", "input_then_leave", "async", "clarify"]); integer(plan.recommendedMinutes, "attendeePlan.recommendedMinutes", 0, 480); string(plan.message, "attendeePlan.message", true, 700);
+    const plan = object(next.attendeePlan, "attendeePlan"); if (!roleIds.has(plan.currentRoleId)) fail("attendeePlan.currentRoleId", "必须引用已声明角色"); string(plan.currentRoleId, "attendeePlan.currentRoleId", true, 32); ids(plan.relevantAgendaIds, "attendeePlan.relevantAgendaIds").forEach((id) => { if (!agendaIds.has(id)) fail("attendeePlan.relevantAgendaIds", `未知议题 ${id}`); }); enumeration(plan.recommendedMode, "attendeePlan.recommendedMode", Object.keys(CONTRIBUTION_FROM_MODE)); integer(plan.recommendedMinutes, "attendeePlan.recommendedMinutes", 0, 480); string(plan.message, "attendeePlan.message", true, 700);
   } else if (next.attendeePlan !== null) object(next.attendeePlan, "attendeePlan");
   return next;
 }

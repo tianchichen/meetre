@@ -1,11 +1,12 @@
-/* ---------------- 天平：梁贴底，两盘内容随倾角平移 ----------------
+/* ---------------- 天平：落在页面中段，两盘内容随倾角平移 ----------------
    角度只写在 --tilt 上；两盘用 --drop-* 做垂直位移，文字始终保持水平。
    --swing 是梁端在最大倾角下的垂直行程，两盘靠它预留出不会互相压住的间距。
    两盘在 flow 里贴着同一条基线，再各自向下平移 (swing + sign·sin·reach)，
    平移量恒 ≥ 0，内容永远不会压到梁上。 */
-.scale { flex: none; position: relative; margin: 0 calc(var(--pad-x) * -1); padding: 0 var(--pad-x); overflow: hidden; }
-/* 底部要留出「最低位置」的空间：drop 最大可达 2 × swing。 */
-.trays { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 4vw); align-items: end; min-height: clamp(128px, 18dvh, 190px); padding-bottom: calc(var(--beam-top) + var(--swing) * 2 + 10px); }
+/* 顶部留白把支点落在首屏约 3/5～2/3；盘面与圆形支点顶部的空间仍要容纳最大摆幅。
+   横向裁到页面边缘，纵向多留出倾斜梁低端的空间，避免左/右端在容器底部被截掉。 */
+.scale { flex: none; position: relative; min-height: clamp(290px, 35dvh, 360px); margin: clamp(28px, 5vh, 52px) calc(var(--pad-x) * -1) 0; padding: 0 var(--pad-x); overflow-x: clip; overflow-y: visible; clip-path: inset(-160px 0 -160px 0); }
+.trays { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 4vw); align-items: end; min-height: clamp(290px, 35dvh, 360px); padding-bottom: calc(var(--fulcrum) - var(--beam-overlap) + var(--swing) * 2 + 10px); }
 .tray { display: flex; flex-direction: column; gap: 8px; min-width: 0; transition: transform .75s var(--ease); }
 .tray-left { align-items: flex-start; transform: translateY(var(--drop-left)); }
 .tray-right { align-items: flex-end; text-align: right; transform: translateY(var(--drop-right)); }
@@ -64,16 +65,25 @@
 .step:disabled { opacity: .28; cursor: not-allowed; }
 .step:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* 梁比可视区更宽，倾斜后两端仍越出画面，像参考图那样被页面裁掉。
-   支点贴住页面底边，首屏要完整露出眼睛和嘴；它同时是会议状态的表情。 */
-.beam { position: absolute; left: -5%; right: -5%; bottom: var(--beam-top); height: var(--beam); background: var(--ink); transform: rotate(var(--tilt)); transform-origin: 50% 50%; transition: transform .75s var(--ease); }
+/* 诊断标题和解释是支点接连说出的对白：无边框、留足呼吸，用柔和阴影分开层次。 */
+.diagnosis-bubbles { position: absolute; left: 50%; bottom: calc(var(--fulcrum) + 8px); z-index: 3; display: flex; flex-direction: column; align-items: center; width: min(62vw, 430px); transform: translateX(-50%); }
+.diagnosis-bubble { position: relative; width: fit-content; max-width: 100%; background: var(--paper); box-shadow: 0 3px 0 rgba(20, 18, 16, .12); }
+.diagnosis-title-bubble { padding: 14px 30px 16px; border-radius: 30px 34px 32px 25px; transform: rotate(-1deg); }
+.diagnosis-title-bubble h1 { position: relative; z-index: 1; max-width: 100%; font: 700 clamp(18px, 2.8vw, 32px)/1.08 var(--body); letter-spacing: -.035em; text-align: center; text-wrap: balance; }
+.diagnosis-copy-bubble { margin-top: -1px; padding: 11px 24px 13px; border-radius: 27px 31px 26px 30px; transform: translateX(12px) rotate(.8deg); }
+.diagnosis-copy-bubble::before { content: ""; position: absolute; top: -8px; left: 27%; width: 11px; height: 11px; border-radius: 50%; background: var(--paper); }
+.diagnosis-copy-bubble::after { content: ""; position: absolute; left: 34%; bottom: -10px; width: 18px; height: 18px; border-radius: 0 0 6px 0; background: var(--paper); box-shadow: 3px 3px 0 rgba(20, 18, 16, .12); transform: rotate(45deg); }
+.diagnosis-copy-bubble .verdict { position: relative; z-index: 1; max-width: 42ch; font: 500 clamp(12px, 1.2vw, 15px)/1.45 var(--body); text-align: center; text-wrap: balance; }
+
+/* 梁比可视区更宽，倾斜后两端仍越出画面；梁线向下压入圆形一点点，但不越过梁线的上沿。 */
+.beam { position: absolute; left: -24%; right: -24%; bottom: calc(var(--fulcrum) - var(--beam-overlap)); height: var(--beam); background: var(--ink); transform: rotate(var(--tilt)); transform-origin: 50% 50%; transition: transform .75s var(--ease); }
 .fulcrum { --look-x: 0px; --look-y: 0px; position: absolute; left: 50%; bottom: 0; width: var(--fulcrum); height: var(--fulcrum); border-radius: 50%; background: var(--ink); transform: translateX(-50%); }
 .face-eye { position: absolute; top: 25%; width: 23%; height: 20%; border-radius: 50%; background: #fff; overflow: hidden; }
 .face-eye-left { left: 22%; }
 .face-eye-right { right: 22%; }
 .face-pupil { position: absolute; left: 50%; top: 50%; width: 43%; aspect-ratio: 1; border-radius: 50%; background: var(--ink); transform: translate(calc(-50% + var(--look-x)), calc(-50% + var(--look-y))); transition: transform .16s cubic-bezier(.22, .8, .3, 1); }
 /* 三种嘴形共用统一的圆头笔画，只切换透明度，避免边缘变尖或状态切换跳变。 */
-.face-mouth { position: absolute; left: 50%; top: 43%; width: 48%; height: 24%; overflow: visible; transform: translateX(-50%); }
+.face-mouth { position: absolute; left: 50%; top: 49%; width: 48%; height: 24%; overflow: visible; transform: translateX(-50%); }
 .face-mouth path { fill: none; stroke: var(--state); stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; transition: opacity .55s var(--ease), stroke .7s ease; }
 .mouth-neutral { opacity: 1; }
 .mouth-smile, .mouth-frown { opacity: 0; }
@@ -82,12 +92,13 @@ body[data-status="balanced"] .mouth-smile { opacity: 1; }
 body[data-status="underpowered"] .mouth-neutral { opacity: 0; }
 body[data-status="underpowered"] .mouth-frown { opacity: 1; }
 
-/* ---------------- Next step ---------------- */
-.next { flex: none; padding: 0 0 clamp(12px, 2.2vh, 22px); }
-.next-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+/* ---------------- Next step：表情圆形正下方的动作 ---------------- */
+.next { flex: none; padding: clamp(8px, 1.4vh, 14px) 0 clamp(14px, 2.2vh, 22px); }
+.next-row { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.next-secondary { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 9px; }
 .cta { padding: clamp(12px, 1.7vh, 17px) clamp(20px, 3vw, 34px); border: 2px solid var(--ink); background: var(--ink); color: var(--state); font: 700 clamp(14px, 1.7vw, 19px) var(--body); letter-spacing: .01em; transition: transform .2s var(--ease); }
 .cta:hover, .cta:focus-visible { transform: translateY(-2px); outline: none; }
 .cta-note { font-size: 12px; opacity: .78; }
-.draft { margin-top: 11px; }
+.draft { width: min(640px, 100%); margin: 11px auto 0; }
 .draft textarea { display: block; width: min(640px, 100%); min-height: 118px; padding: 12px; border: 1.5px solid var(--ink); background: rgba(255, 255, 255, .82); resize: vertical; font: 13px/1.6 var(--body); }
 .draft-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }

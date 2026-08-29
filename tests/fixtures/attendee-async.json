@@ -41,8 +41,8 @@
   "attendeePlan": {
     "currentRoleId": "reviewer",
     "relevantAgendaIds": ["feedback"],
-    "recommendedMode": "async",
+    "recommendedMode": "after",
     "recommendedMinutes": 15,
-    "message": "我可以先在设计稿中留下反馈，目前没有必须参加同步会议的议题。若需要我参加{参加议题}，请告诉我具体要做的决定。"
+    "message": "我可以先在设计稿中留下书面反馈，目前没有议题需要我现场表态，请会后把结论同步给我。"
   }
 }

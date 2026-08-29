@@ -2,64 +2,38 @@
   <header class="topbar">
     <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>meetre</span></div>
     <div class="topbar-actions">
-      <div class="viewswitch" role="group" aria-label="切换评估视角">
-        <button type="button" data-perspective="organizer" aria-pressed="true">组织者</button>
-        <button type="button" data-perspective="attendee" aria-pressed="false">参会者</button>
-      </div>
       <button class="ghost" id="resetButton" type="button">恢复原方案</button>
       <button class="ghost" id="detailsButton" type="button" aria-expanded="false">判断依据</button>
     </div>
   </header>
 
-  <section class="report">
-    <p class="eyebrow"><span id="perspectiveTag">组织者视角</span><b id="meetingTitle">—</b></p>
-    <h1 id="headline">—</h1>
-    <p class="verdict" id="statusLine" aria-live="polite">—</p>
-    <p class="caution" id="cautionLine" hidden></p>
-
-    <div class="investment">
-      <small>当前投入 <span aria-hidden="true">/</span> 合理投入</small>
-      <p><b id="metricCost">—</b><span>/</span><b id="metricBudget">—</b></p>
+  <section class="intake" aria-label="会议与参与方式">
+    <div class="perspective-row">
+      <p class="eyebrow"><span id="perspectiveTag">组织者视角</span><b id="meetingTitle">—</b></p>
+      <div class="viewswitch" role="group" aria-label="切换评估视角">
+        <span class="label">视角</span>
+        <button type="button" data-perspective="organizer" aria-pressed="true">组织者</button>
+        <button type="button" data-perspective="attendee" aria-pressed="false">参会者</button>
+      </div>
     </div>
-    <p class="facts">
-      <span>同步 <b id="metricPeople">—</b></span>
-      <span>时长 <b id="metricDuration">—</b></span>
-      <span id="metricSavedLabel">返还时间</span><span><b id="metricSaved">—</b></span>
-    </p>
 
-    <!-- 判断和理由已经由 h1 和它下面那句话说完了，这个面板只负责「我怎么落地」：
-         我是谁、议程里有多少和我有关、我选择哪种参与方式。 -->
+    <!-- 参会者先填身份与贡献，结论和操作都会据此更新；这里不做卡片套卡片。 -->
     <div class="mine" id="mineRow" hidden>
-      <p class="mine-verdict" id="mineVerdict">—</p>
       <div class="mine-controls">
         <span class="label">我的角色</span>
-        <span id="mineRoles"></span>
+        <span class="mine-options" id="mineRoles"></span>
       </div>
       <div class="mine-controls">
-        <span class="label">我的参与方式</span>
-        <button class="mine-option" type="button" data-attendee-mode="full" aria-pressed="false">全程参加</button>
-        <button class="mine-option" type="button" data-attendee-mode="partial" aria-pressed="false">只参加相关议题</button>
-        <button class="mine-option" type="button" data-attendee-mode="input_then_leave" aria-pressed="false">先给输入</button>
-        <button class="mine-option" type="button" data-attendee-mode="async" aria-pressed="false">异步接收结果</button>
-        <span id="mineTime" class="label"></span>
+        <span class="label">我的贡献</span>
+        <span class="mine-options">
+          <button class="mine-option" type="button" data-contribution="decide" aria-pressed="false">现场决定或对齐分歧</button>
+          <button class="mine-option" type="button" data-contribution="input" aria-pressed="false">提供信息或材料</button>
+          <button class="mine-option" type="button" data-contribution="receive" aria-pressed="false">只需要知道结论</button>
+        </span>
       </div>
+      <p class="mine-facts" id="mineFacts" aria-live="polite">—</p>
     </div>
-  </section>
-
-  <section class="next">
-    <div class="next-row">
-      <button class="cta" id="ctaButton" type="button">—</button>
-      <button class="ghost" id="ctaAlternate" type="button" hidden></button>
-      <span class="cta-note" id="ctaNote"></span>
-    </div>
-    <div class="draft" id="draftBox" hidden>
-      <textarea id="draftText" aria-label="可编辑的文案草稿"></textarea>
-      <div class="draft-actions">
-        <button class="ghost" id="copyDraftButton" type="button">复制</button>
-        <button class="ghost" id="reviewButton" type="button">带回 Agent 复评</button>
-        <button class="ghost" id="closeDraftButton" type="button">收起</button>
-      </div>
-    </div>
+    <p class="caution" id="cautionLine" hidden></p>
   </section>
 
   <section class="scale" id="scale" aria-label="会议天平">
@@ -67,11 +41,20 @@
       <div class="tray tray-left">
         <div class="tray-head"><b>谁来</b><span id="leftCaption">—</span></div>
         <div class="tray-body" id="roleTray"></div>
-        <p class="merge-hint" id="mergeHint" aria-live="polite">拖动单人角色的把手到另一角色，即可由同一人兼任</p>
+        <p class="merge-hint" id="mergeHint" aria-live="polite">拖动角色的把手到另一角色，即可合并整个角色</p>
       </div>
       <div class="tray tray-right">
         <div class="tray-head"><span id="rightCaption">—</span><b>做什么</b></div>
         <div class="tray-body" id="topicTray"></div>
+      </div>
+    </div>
+    <!-- 诊断标题和解释是支点接连说出的两句对白，保留 h1 语义。 -->
+    <div class="diagnosis-bubbles">
+      <div class="diagnosis-bubble diagnosis-title-bubble">
+        <h1 id="headline">—</h1>
+      </div>
+      <div class="diagnosis-bubble diagnosis-copy-bubble">
+        <p class="verdict" id="statusLine" aria-live="polite">—</p>
       </div>
     </div>
     <div class="beam" id="beam" aria-hidden="true"></div>
@@ -85,6 +68,41 @@
         <path class="mouth-frown" d="M7 16C13 6 35 6 41 16"></path>
       </svg>
     </div>
+  </section>
+
+  <section class="next">
+    <div class="next-row">
+      <button class="cta" id="ctaButton" type="button">—</button>
+      <div class="next-secondary">
+        <button class="ghost" id="ctaAlternate" type="button" hidden></button>
+        <span class="cta-note" id="ctaNote"></span>
+      </div>
+    </div>
+    <div class="draft" id="draftBox" hidden>
+      <textarea id="draftText" aria-label="可编辑的文案草稿"></textarea>
+      <div class="draft-actions">
+        <button class="ghost" id="copyDraftButton" type="button">复制</button>
+        <button class="ghost" id="reviewButton" type="button">带回 Agent 复评</button>
+        <button class="ghost" id="closeDraftButton" type="button">收起</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="settlement" aria-label="时间结算">
+    <div class="settlement-heading">
+      <span class="label">时间结算</span>
+      <span>当前投入 <span aria-hidden="true">/</span> 合理投入</span>
+    </div>
+    <div class="settlement-values" aria-label="当前投入与合理投入">
+      <span class="settlement-metric"><small>当前</small><b id="metricCost">—</b></span>
+      <span class="settlement-divider" aria-hidden="true">/</span>
+      <span class="settlement-metric settlement-metric-target"><small>合理</small><b id="metricBudget">—</b></span>
+    </div>
+    <p class="facts">
+      <span>同步 <b id="metricPeople">—</b></span>
+      <span>时长 <b id="metricDuration">—</b></span>
+      <span id="metricSavedLabel">返还时间</span><span><b id="metricSaved">—</b></span>
+    </p>
   </section>
 </main>
 

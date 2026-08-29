@@ -9,10 +9,10 @@
   --tilt: 0deg;
   --fulcrum: clamp(64px, 8.5vw, 104px);
   --beam: clamp(11px, 1.4dvh, 16px);
+  --beam-overlap: clamp(2px, .32vw, 4px);
   --swing: 52px; /* 摆幅与两盘的下沉量都由 JS 按实测臂长覆盖 */
   --drop-left: 0px;
   --drop-right: 0px;
-  --beam-top: clamp(20px, 3.2vw, 42px);
   --pad-x: clamp(18px, 4.5vw, 60px);
   --ease: cubic-bezier(.34, 1.4, .64, 1);
   --display: "Baskerville", "Songti SC", "STSong", serif;

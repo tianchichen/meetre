@@ -19,7 +19,7 @@ function seatIcon(role, bucket, index, covers) {
   return seat;
 }
 
-/* 合并是一个空间动作：拖动单人角色的把手到宿主行。
+/* 合并是一个空间动作：拖动角色的把手到宿主行，整个源角色一起并入。
    点击把手后再点目标行是同一动作的触控/键盘后备，不再使用抽象的下拉菜单。 */
 function mergeHandle(role) {
   if (!mergeCandidates(role.id).length) return null;
@@ -29,8 +29,8 @@ function mergeHandle(role) {
   handle.draggable = true;
   handle.dataset.mergeSource = role.id;
   text(handle, "⠿");
-  handle.title = "拖到另一个角色，由同一人兼任";
-  handle.setAttribute("aria-label", `拖动“${role.label}”到另一个角色进行合并；也可按下后再选择目标`);
+  handle.title = "拖到另一个角色，合并整个角色";
+  handle.setAttribute("aria-label", `拖动“${role.label}”到另一个角色，合并整个角色；也可按下后再选择目标`);
   let dragged = false;
   handle.addEventListener("dragstart", (event) => {
     dragged = true;
@@ -62,7 +62,7 @@ function updateMergeTargets() {
   const source = sourceId ? roleById(sourceId) : null;
   text($("mergeHint"), source
     ? `把“${source.label}”放到高亮角色；Esc 取消`
-    : "拖动单人角色的把手到另一角色，即可由同一人兼任");
+    : "拖动角色的把手到另一角色，即可合并整个角色");
 }
 
 function wireMergeTarget(row) {

@@ -41,4 +41,15 @@ Each agenda item contains `id`, `title`, `type`, `syncRequirement`, `mode`, `syn
 
 `evidence.for` and `evidence.against` are short objects with `label`, `detail`, and `weight` from 1 to 3. The report displays them as visible reasons, not as a numeric score.
 
-For `attendee`, `attendeePlan` contains `currentRoleId`, `relevantAgendaIds`, `recommendedMode` (`full`, `partial`, `input_then_leave`, `async`, or `clarify`), `recommendedMinutes`, and `message`.
+For `attendee`, `attendeePlan` contains `currentRoleId`, `relevantAgendaIds`, `recommendedMode`, `recommendedMinutes`, and `message`.
+
+`recommendedMode` is one of three ways to take part, plus `clarify`:
+
+- `attend` — be there for the whole synchronous block.
+- `before` — send the contribution in writing before the meeting, and skip it.
+- `after` — skip the meeting and receive the conclusion afterwards.
+- `clarify` — the perspective is not decidable yet.
+
+There is deliberately no "attend only the relevant items" mode: partial attendance disrupts the meeting's rhythm and is rarely carried out in practice. Attending means attending in full.
+
+The renderer treats `recommendedMode` as the initial value of the attendee's own contribution answer, not as a fixed verdict. The page derives the recommended way to take part from two inputs: which roles the reader holds (a required-role floor overrides self-assessment) and whether their contribution can be expressed in writing. Older Schema v1 documents may still use `full`, `partial`, `input_then_leave`, or `async`; both validators accept them and map them onto the three current ways (`full` → attend, `partial` and `input_then_leave` → before, `async` → after).

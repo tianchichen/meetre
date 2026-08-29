@@ -1,8 +1,7 @@
-/* ---------------- 页面骨架：报告在上，天平贴底 ---------------- */
-/* 目标仍是一屏读完，所以用 min-height 而不是 height：内容装得下就正好一屏，
-   装不下（参会者面板、草稿、窄屏）就让整页长出来滚动，而不是把内容裁掉或塞进一个看不见的内层滚动区。 */
+/* ---------------- 页面骨架：顶部输入，中段天平，底部结算 ----------------
+   视觉路径是「先告诉我你是谁 → 看结论 → 调整方案 → 读时间账单」。天平不再贴住页面底边，
+   由自身高度和顶部留白落在首屏约 3/5～2/3 的位置；内容增多时仍允许整页自然滚动。 */
 .page { display: flex; flex-direction: column; min-height: 100dvh; padding: clamp(16px, 3.2vh, 32px) var(--pad-x) 0; }
-/* flex-wrap：窄屏宁可让顶栏换行，也不要把里面的按钮压变形。 */
 .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; flex: none; }
 .brand { display: flex; align-items: center; gap: 9px; font: 700 12px var(--body); letter-spacing: .1em; text-transform: uppercase; }
 .brand-mark { width: 34px; height: 8px; background: var(--ink); }
@@ -10,47 +9,43 @@
 .ghost { padding: 6px 11px; border: 1.5px solid var(--ink); background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; }
 .ghost:hover, .ghost:focus-visible { background: var(--ink); color: var(--state); outline: none; }
 
-/* 视角切换：两个视角评估的是不同的问题，所以它是一等控件，不是设置项。 */
-.viewswitch { display: flex; border: 1.5px solid var(--ink); }
-/* white-space: nowrap：窄屏上顶栏挤压时「组织者」会被拆成竖排单字。 */
-.viewswitch button { padding: 6px 13px; border: 0; background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; }
-.viewswitch button + button { border-left: 1.5px solid var(--ink); }
-.viewswitch button[aria-pressed="true"] { background: var(--ink); color: var(--state); }
+/* 视角切换和「组织者视角 / 参会者视角」放在同一行，导航只保留页面级操作。 */
+.intake { display: flex; flex-direction: column; gap: clamp(9px, 1.4vh, 16px); flex: none; min-height: clamp(122px, 16vh, 156px); padding-top: clamp(26px, 5vh, 52px); }
+.perspective-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.viewswitch { display: flex; align-items: center; gap: 2px; }
+.viewswitch .label { margin-right: 4px; }
+.viewswitch button { padding: 3px 8px 4px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; opacity: .62; }
+.viewswitch button[aria-pressed="true"] { border-bottom-color: var(--ink); background: rgba(247, 243, 236, .38); opacity: 1; }
 .viewswitch button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* 报告区吸收所有多余高度并可被压缩；天平和 CTA 是 flex: none，永远完整可见。
-   居中靠上下两个可伸缩的空白项实现，而不是 justify-content: center：
-   后者在内容比容器高时会把两端一起裁掉，参会者面板一出现就会切掉 h1。
-   空白项在没有余量时自然收成 0，内容改为顶对齐，超出的部分由整页滚动兜底。 */
-.report { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start; gap: clamp(8px, 1.4vh, 16px); padding: clamp(10px, 2vh, 22px) 0; min-height: 0; }
-.report::before, .report::after { content: ""; flex: 1 1 0; min-height: 0; }
-
-/* 主次：结论是 h1，会议名退成一行眉标题。会议叫什么不影响该不该开。 */
+/* 主次：会议名和视角是输入上下文；结论 h1 只在天平支点上方出现一次。 */
 .eyebrow { display: flex; align-items: baseline; gap: 9px; font-size: 12px; opacity: .82; }
 .eyebrow b { font-weight: 700; }
 .eyebrow span { font: 10px var(--mono); letter-spacing: .09em; text-transform: uppercase; opacity: .8; }
-h1 { font: 700 clamp(34px, 6.6vw, 82px)/.92 var(--display); letter-spacing: -.045em; max-width: 22ch; }
-.verdict { max-width: 46ch; font-size: clamp(14px, 1.6vw, 19px); }
-.caution { max-width: 52ch; padding-left: 11px; border-left: 3px solid var(--ink); font-size: 13px; }
+.caution { max-width: 64ch; padding-left: 10px; border-left: 3px solid var(--ink); font-size: 12px; }
 
-/* ---------------- 当前投入 / 合理投入 ----------------
-   主区只保留用户此刻真正需要比较的两个数字；完整三方比较退到「判断依据」。 */
-.investment { margin-left: auto; text-align: right; }
-.investment small { font: 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; opacity: .72; }
-.investment p { display: flex; align-items: baseline; gap: 9px; margin-top: 3px; }
-.investment p b { font: 700 clamp(24px, 4.1vw, 46px)/1 var(--mono); letter-spacing: -.045em; }
-.investment p span { font: 400 18px var(--display); opacity: .45; }
-.investment p b:last-child { font-size: clamp(18px, 2.7vw, 30px); opacity: .7; }
+/* ---------------- 参会者视角：顶部两个输入 ----------------
+   取消容器边框和内层卡片，让选择项像一行可编辑的标签；选中态用浅底 + 下沿强调。 */
+.mine { display: flex; flex-direction: column; gap: 7px; padding: 9px 0 10px; border-top: 1px solid rgba(20, 18, 16, .34); border-bottom: 1px solid rgba(20, 18, 16, .34); }
+.mine-facts { font: 11px var(--mono); letter-spacing: .02em; opacity: .78; }
+.mine-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; }
+.mine-options { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.mine-option { padding: 5px 10px 6px; border: 0; border-bottom: 2px solid transparent; border-radius: 999px; background: rgba(255, 255, 255, .14); font-size: 12px; opacity: .7; transition: background-color .2s ease, border-color .2s ease, opacity .2s ease; }
+.mine-option[aria-pressed="true"] { border-bottom-color: var(--ink); background: rgba(247, 243, 236, .58); opacity: 1; font-weight: 700; }
+/* 必要角色底线关掉的那几档要看得出「存在但此刻不成立」：删除线比单纯变淡更明确，
+   否则它和普通的未选中项长得一样，用户会以为自己点不动是页面坏了。 */
+.mine-option:disabled { opacity: .4; text-decoration: line-through; cursor: not-allowed; }
+.mine-option:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-.facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
+/* ---------------- 底部时间结算 ---------------- */
+.settlement { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 5px 20px; margin-top: auto; padding: clamp(10px, 1.8vh, 17px) 0 clamp(14px, 2.4vh, 24px); border-top: 1px solid rgba(20, 18, 16, .34); }
+.settlement-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; font-size: 11px; opacity: .78; }
+.settlement-values { display: flex; align-items: baseline; gap: 10px; text-align: right; }
+.settlement-metric { display: flex; align-items: baseline; gap: 7px; }
+.settlement-metric small { font: 10px var(--mono); opacity: .72; }
+.settlement-metric b { font: 700 clamp(24px, 3.5vw, 42px)/1 var(--mono); letter-spacing: -.045em; }
+.settlement-metric-target b { font-size: clamp(18px, 2.5vw, 29px); opacity: .72; }
+.settlement-divider { font: 400 18px var(--display); opacity: .45; }
+.facts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; opacity: .82; }
 .facts span { white-space: nowrap; }
 .facts b { font: 700 12px var(--mono); }
-
-/* ---------------- 参会者视角：我是否必要 ---------------- */
-.mine { display: flex; flex-direction: column; gap: 7px; padding: clamp(9px, 1.4vh, 13px) 12px; border: 1.5px solid var(--ink); background: rgba(255, 255, 255, .16); }
-.mine-verdict { font: 700 clamp(15px, 2vw, 21px) var(--body); }
-.mine-reason { max-width: 54ch; font-size: 12.5px; }
-.mine-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
-.mine-option { padding: 4px 9px; border: 1.5px solid transparent; background: transparent; font-size: 12px; opacity: .7; }
-.mine-option[aria-pressed="true"] { border-color: var(--ink); opacity: 1; font-weight: 700; }
-.mine-option:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }

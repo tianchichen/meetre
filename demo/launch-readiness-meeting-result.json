@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "perspective": "organizer",
+  "meeting": {
+    "title": "产品上线 Go / No-Go 评审会",
+    "purpose": "在上线窗口前决定是否按计划发布，并明确未关闭风险的处置人",
+    "expectedOutcome": "决定上线日期与放行条件，确认每个高风险项的负责人",
+    "outcomeLevel": "high",
+    "outcomeWhy": "结果会影响多个团队的发布节奏，错过窗口或放行风险都很难在当天撤回。",
+    "participants": 9,
+    "durationMinutes": 75
+  },
+  "verdict": {
+    "kind": "shrink",
+    "confidence": "high",
+    "summary": "上线判断值得同步，但播报、旁观者和重复角色让当前会议明显偏重。"
+  },
+  "evidence": {
+    "for": [
+      {
+        "label": "需要现场放行判断",
+        "detail": "产品、研发和决策者要共同权衡上线窗口与未关闭风险。",
+        "weight": 3
+      },
+      {
+        "label": "风险需要当场收敛",
+        "detail": "运营负责人要确认高风险项的处置人和时间点，不能只靠转发清单。",
+        "weight": 3
+      }
+    ],
+    "against": [
+      {
+        "label": "发布前检查可异步",
+        "detail": "指标、清单和已知问题可以提前写成发布简报，供相关人会前阅读。",
+        "weight": 2
+      },
+      {
+        "label": "旁观者不改变结果",
+        "detail": "只需要知道上线结论的相关方无需占用现场决策时间。",
+        "weight": 3
+      },
+      {
+        "label": "同一人可兼两职",
+        "detail": "产品负责人和执行负责人在小团队里可能由同一个人承担。",
+        "weight": 1
+      }
+    ]
+  },
+  "roles": [
+    {
+      "id": "decision-maker",
+      "label": "最终决策者",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "对上线与否最终拍板"
+    },
+    {
+      "id": "product-owner",
+      "label": "产品负责人",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "说明用户价值、范围和放行条件"
+    },
+    {
+      "id": "engineering-lead",
+      "label": "研发负责人",
+      "originalCount": 2,
+      "syncCount": 2,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "确认技术风险与可交付性"
+    },
+    {
+      "id": "ops-owner",
+      "label": "运营执行负责人",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "承接上线动作和风险处置"
+    },
+    {
+      "id": "support-input",
+      "label": "客服与支持输入",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "补充用户影响与支持准备情况"
+    },
+    {
+      "id": "stakeholders",
+      "label": "结果知会者",
+      "originalCount": 3,
+      "syncCount": 3,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "接收上线结论，不改变现场判断"
+    }
+  ],
+  "agenda": [
+    {
+      "id": "readiness",
+      "title": "发布指标与检查清单",
+      "type": "update",
+      "syncRequirement": "none",
+      "mode": "sync",
+      "syncMinutes": 25,
+      "asyncMinutes": 5,
+      "minSyncMinutes": 5,
+      "requiredRoleIds": [],
+      "why": "指标、清单和已知问题适合提前写入发布简报"
+    },
+    {
+      "id": "go-no-go",
+      "title": "Go / No-Go 上线判断",
+      "type": "decision",
+      "syncRequirement": "required",
+      "mode": "sync",
+      "syncMinutes": 25,
+      "asyncMinutes": 5,
+      "minSyncMinutes": 15,
+      "requiredRoleIds": ["decision-maker", "product-owner", "engineering-lead"],
+      "why": "需要现场权衡上线窗口、范围和风险"
+    },
+    {
+      "id": "risk-closure",
+      "title": "高风险项与处置人",
+      "type": "resolve",
+      "syncRequirement": "preferred",
+      "mode": "sync",
+      "syncMinutes": 15,
+      "asyncMinutes": 5,
+      "minSyncMinutes": 10,
+      "requiredRoleIds": ["engineering-lead", "ops-owner", "support-input"],
+      "why": "把未关闭风险收敛成具体负责人和时间点"
+    },
+    {
+      "id": "handoff",
+      "title": "上线动作与对外沟通",
+      "type": "resolve",
+      "syncRequirement": "preferred",
+      "mode": "sync",
+      "syncMinutes": 10,
+      "asyncMinutes": 5,
+      "minSyncMinutes": 5,
+      "requiredRoleIds": ["product-owner", "ops-owner"],
+      "why": "确认执行顺序、回滚口径和用户沟通负责人"
+    }
+  ],
+  "recommendation": {
+    "roleSyncCounts": {
+      "decision-maker": 1,
+      "product-owner": 1,
+      "engineering-lead": 1,
+      "ops-owner": 1,
+      "support-input": 0,
+      "stakeholders": 0
+    },
+    "agendaModes": {
+      "readiness": "async",
+      "go-no-go": "sync",
+      "risk-closure": "sync",
+      "handoff": "sync"
+    },
+    "agendaMinutes": {
+      "readiness": 25,
+      "go-no-go": 20,
+      "risk-closure": 15,
+      "handoff": 10
+    },
+    "why": "把发布简报改成会前异步阅读，现场用 45 分钟完成上线判断、风险收敛和动作交接，只保留能改变结果的核心角色。"
+  },
+  "attendeePlan": null
+}

@@ -203,6 +203,39 @@ async function checkOrganizer(session) {
   assert.strictEqual(await session.textOf('headline'), '有优化空间');
   assert.strictEqual(await session.textOf('perspectiveTag'), '组织者视角');
 
+  // 页面层级：视角切换不再占导航位；天平约在首屏中下段，动作紧跟表情，时间结算收在底部。
+  const composition = await session.evaluate(`
+    const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+    const face = box('#fulcrum');
+    const cta = box('#ctaButton');
+    const settlement = box('.settlement');
+    const scale = box('#scale');
+    const beam = box('#beam');
+    return {
+      viewport: window.innerHeight,
+      scaleCenter: scale.top + scale.height / 2,
+      beamOverlap: beam.top + beam.height / 2 + document.getElementById('beam').offsetHeight / 2 - face.top,
+      beamHeight: document.getElementById('beam').offsetHeight,
+      scaleLeft: scale.left,
+      scaleRight: scale.right,
+      beamLeft: beam.left,
+      beamRight: beam.right,
+      faceBottom: face.bottom,
+      ctaTop: cta.top,
+      ctaBottom: cta.bottom,
+      settlementTop: settlement.top,
+      navHasViewSwitch: Boolean(document.querySelector('.topbar .viewswitch')),
+      inlineHasViewSwitch: Boolean(document.querySelector('.perspective-row .viewswitch'))
+    };
+  `);
+  assert.ok(composition.scaleCenter > composition.viewport * .5 && composition.scaleCenter < composition.viewport * .8, `scale should sit in the middle-lower area: ${JSON.stringify(composition)}`);
+  assert.ok(composition.beamOverlap > 0 && composition.beamOverlap < composition.beamHeight, `beam should slightly overlap the face without crossing its upper edge: ${JSON.stringify(composition)}`);
+  assert.ok(composition.beamLeft <= composition.scaleLeft + 1 && composition.beamRight >= composition.scaleRight - 1, `tilted beam should reach both page edges: ${JSON.stringify(composition)}`);
+  assert.ok(composition.ctaTop >= composition.faceBottom - 1, `CTA should follow the face: ${JSON.stringify(composition)}`);
+  assert.ok(composition.settlementTop > composition.ctaBottom, `settlement should follow the action: ${JSON.stringify(composition)}`);
+  assert.strictEqual(composition.navHasViewSwitch, false);
+  assert.strictEqual(composition.inlineHasViewSwitch, true);
+
   // 支点是可响应的表情：鼠标去左盘时眼珠向左，去右盘时向右。
   assert.strictEqual(await session.evaluate('return document.querySelectorAll("#fulcrum .face-eye").length;'), 2);
   assert.strictEqual(await session.evaluate('return getComputedStyle(document.querySelector(".face-eye")).backgroundColor;'), 'rgb(255, 255, 255)');
@@ -316,12 +349,33 @@ async function checkOrganizer(session) {
   fs.writeFileSync('/tmp/meetre-smoke.png', Buffer.from(shot.data, 'base64'));
 }
 
-/* 一个人兼多个角色是真实情况：合并后人头要减少，成本要下降，
-   但被合并角色的底线仍然要由兼任的人满足——合并不是绕过底线的后门。 */
+/* 角色级合并允许把整个角色并入另一个角色：合并后人头要减少，成本要下降，
+   但被合并角色的底线仍然要由宿主满足——合并不是绕过底线的后门。 */
 async function checkRoleMerge(session) {
   await session.open(pathToFileURL(path.join(ROOT, 'index.html')).href);
   const before = await session.textOf('metricPeople');
   assert.strictEqual(before, '8 人');
+
+  // 多人角色也能作为源角色：把研发关键输入（2 人）整体并入决策者。
+  assert.strictEqual(
+    await session.evaluate(`return Boolean([...document.querySelectorAll('.role')]
+      .find((element) => element.querySelector('.role-name b').textContent === '研发关键输入')
+      ?.querySelector('.merge-handle'));`),
+    true,
+    'multi-person roles should expose a merge handle'
+  );
+  await session.mergeInto('研发关键输入', '决策者');
+  await sleep(150);
+  assert.strictEqual(await session.textOf('metricPeople'), '6 人', 'merging a multi-person role removes its whole group');
+  assert.strictEqual(
+    await session.evaluate(`return [...document.querySelectorAll('.role')]
+      .find((element) => element.querySelector('.role-name b').textContent === '决策者')
+      ?.querySelector('.merge-handle') !== null;`),
+    false,
+    'a host role should remain a drop target without becoming a chained source'
+  );
+  await session.click('#resetButton');
+  await sleep(150);
 
   // 执行负责人（1 人，必要 ≥1）拖到决策者：同一个人兼两职。
   await session.mergeInto('执行负责人', '决策者');
@@ -388,42 +442,72 @@ async function checkPerspectiveSwitch(session) {
   await sleep(180);
   assert.strictEqual(await session.view(), 'attendee');
   assert.strictEqual(await session.hidden('mineRow'), false);
-  // organizer fixture 没有 attendeePlan，默认把「我」放进人数最多的知会者。
-  assert.match(await session.textOf('mineVerdict'), /知会者/);
-  assert.strictEqual(await session.textOf('headline'), '你不必到场');
-  assert.match(await session.textOf('ctaButton'), /请辞并提议异步/);
+  const attendeeComposition = await session.evaluate(`
+    const mine = document.getElementById('mineRow').getBoundingClientRect();
+    const scale = document.getElementById('scale').getBoundingClientRect();
+    return { mineTop: mine.top, mineBottom: mine.bottom, scaleTop: scale.top };
+  `);
+  assert.ok(attendeeComposition.mineTop < attendeeComposition.scaleTop, `attendee inputs should stay above the scale: ${JSON.stringify(attendeeComposition)}`);
+  // organizer fixture 没有 attendeePlan，默认把「我」放进人数最多的知会者，贡献默认「只需要知道结论」。
+  assert.match(await session.textOf('mineFacts'), /同步议题与你相关/);
+  assert.strictEqual(await session.textOf('headline'), '会后接收结论就够了');
+  assert.match(await session.textOf('ctaButton'), /改成会后接收结论/);
   // 参会者视角不该出现组织者的整场处方按钮。
   assert.ok(!/按建议调整/.test(await session.textOf('ctaButton')));
 
-  // 换成执行负责人：只在「确认风险与负责人」里必要 → 只需要来一段。
-  await session.click('[data-my-role="informed"]');
-  await sleep(120);
-  await session.click('[data-my-role="owner"]');
+  /* 三种方式之间只由「我的贡献」切换，没有「只参加相关议题」这一档：
+     中途进出会打乱会议节奏，页面不再提供它。 */
+  assert.strictEqual(
+    await session.evaluate('return document.querySelectorAll("[data-contribution]").length;'),
+    3, 'attendee panel should offer exactly three contribution answers'
+  );
+  // 只查可见控件文本：内联 script 的注释里会正当地出现这个词（说明为什么不提供）。
+  assert.strictEqual(
+    await session.evaluate(`
+      return [...document.querySelectorAll('button, .label, h1, .verdict')]
+        .some((element) => /只参加|部分参加|先离开/.test(element.textContent));
+    `),
+    false, 'partial attendance must not be offered as a control or verdict'
+  );
+
+  await session.click('[data-contribution="input"]');
   await sleep(150);
-  assert.strictEqual(await session.textOf('headline'), '你只需要来一段');
-  assert.match(await session.textOf('ctaButton'), /提议只参加相关议题/);
-  assert.strictEqual(await session.valueOf('draftText'), '', 'switching roles must not leave a stale draft open');
+  assert.strictEqual(await session.textOf('headline'), '会前给输入就够了');
+  assert.match(await session.textOf('ctaButton'), /改成会前异步给输入/);
+  assert.strictEqual(await session.valueOf('draftText'), '', 'switching contribution must not leave a stale draft open');
   await session.click('#ctaButton');
   await sleep(150);
   const mine = await session.valueOf('draftText');
-  assert.match(mine, /确认风险与负责人/);
+  assert.match(mine, /会前/);
   assert.ok(!/需要在场/.test(mine), 'attendee draft must not read like an organizer invite');
+  assert.ok(!/先离开|只参加/.test(mine), 'attendee draft must not propose leaving mid-meeting');
 
-  /* 必要角色覆盖整个同步议程时才是「必须在场」：把其他议题移成异步后，
-     决定发布日期成为唯一同步议题，决策者就再没有可以缺席的部分。 */
-  await session.click('[data-my-role="owner"]');
+  /* 必要角色底线压过自我评估：换成决策者后，即使「我的贡献」还停在会前给输入，
+     结论也必须是到场，而且那两档要被禁用——看得见但此刻不成立。 */
+  await session.click('[data-my-role="informed"]');
   await sleep(120);
   await session.click('[data-my-role="decision"]');
-  await sleep(120);
-  await session.evaluate(`
-    [...document.querySelectorAll('.topic')]
-      .filter((row) => row.dataset.mode === 'sync' && row.querySelector('.topic-lock').textContent !== '必须同步')
-      .forEach((row) => row.querySelector('.topic-name').click());
-    return true;
-  `);
-  await sleep(200);
-  assert.strictEqual(await session.textOf('headline'), '你必须在场');
-  assert.match(await session.textOf('ctaButton'), /确认参加/);
+  await sleep(150);
+  assert.strictEqual(await session.textOf('headline'), '你需要到场');
+  assert.match(await session.textOf('ctaButton'), /确认到场/);
+  assert.deepStrictEqual(
+    await session.evaluate(`
+      return [...document.querySelectorAll('[data-contribution]')]
+        .map((button) => [button.dataset.contribution, button.disabled, button.getAttribute('aria-pressed')]);
+    `),
+    [['decide', false, 'true'], ['input', true, 'false'], ['receive', true, 'false']],
+    'a required-role floor must force 到场 and disable the two async answers'
+  );
+  assert.strictEqual(await session.valueOf('draftText'), '', 'switching roles must not leave a stale draft open');
+  // 禁用要看得出来：截图显示纯变淡和普通未选中项区分不开，所以钉住删除线。
+  assert.match(
+    await session.evaluate('return getComputedStyle(document.querySelector(\'[data-contribution="receive"]\')).textDecorationLine;'),
+    /line-through/, 'a disabled contribution answer must be visibly struck through'
+  );
+  assert.notStrictEqual(
+    await session.evaluate('return getComputedStyle(document.querySelector(\'[data-my-role="decision"]\')).backgroundColor;'),
+    'rgba(0, 0, 0, 0)', 'selected role should use a light background instead of a heavy frame'
+  );
   await session.click('#resetButton');
   await sleep(150);
 
@@ -441,14 +525,22 @@ async function checkAttendee(session) {
     '--output', '/tmp/meetre-attendee.html'
   ], { stdio: 'ignore' });
 
-  // attendeePlan 存在时页面直接落在参会者视角，「我」预设成 currentRoleId。
+  /* attendeePlan 存在时页面直接落在参会者视角，「我」预设成 currentRoleId，
+     recommendedMode: after 只作为「我的贡献」的初值。 */
   await session.open(pathToFileURL('/tmp/meetre-attendee.html').href);
   assert.strictEqual(await session.view(), 'attendee');
   assert.strictEqual(await session.hidden('mineRow'), false);
-  assert.match(await session.textOf('mineVerdict'), /评审者/);
+  assert.strictEqual(
+    await session.evaluate('return document.querySelector(\'[data-my-role="reviewer"]\').getAttribute("aria-pressed");'),
+    'true', 'attendeePlan.currentRoleId should preselect 评审者'
+  );
+  assert.strictEqual(
+    await session.evaluate('return document.querySelector(\'[data-contribution="receive"]\').getAttribute("aria-pressed");'),
+    'true', 'recommendedMode: after should seed the 只需要知道结论 answer'
+  );
 
-  // 参会者视角下 CTA 说的是「提议 / 请辞」，不是「发出」。
-  assert.match(await session.textOf('ctaButton'), /提议只参加相关议题|请辞并提议异步|确认参加/);
+  // 参会者视角下 CTA 是「确认 / 改成」，不是「发出」。
+  assert.match(await session.textOf('ctaButton'), /确认到场|改成会前异步给输入|改成会后接收结论/);
   await session.click('#ctaButton');
   await sleep(120);
   const draft = await session.valueOf('draftText');
@@ -467,8 +559,9 @@ async function checkAttendee(session) {
   await sleep(200);
   assert.strictEqual(await session.status(), 'async');
   assert.strictEqual(await session.textOf('metricDuration'), '无会议');
-  assert.strictEqual(await session.textOf('headline'), '你不必到场');
-  assert.match(await session.textOf('ctaButton'), /请辞并提议异步/);
+  // 没有同步议题时，任何贡献答案都推不出「到场」：没有会可到。
+  assert.strictEqual(await session.textOf('headline'), '会后接收结论就够了');
+  assert.match(await session.textOf('ctaButton'), /改成会后接收结论/);
   await session.click('#ctaButton');
   await sleep(120);
   // 全异步态下参会者的文案要提出「整场改成书面更新」，而不是只说自己缺席。

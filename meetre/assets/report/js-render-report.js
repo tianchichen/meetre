@@ -1,6 +1,6 @@
-/* ---------------- 渲染：上方报告区 ----------------
-   主次顺序：结论（h1）→ 一句话理由 → 当前/合理投入 → 零碎事实。
-   会议名退到眉标题：它标识这场会，但不影响该不该开。 */
+/* ---------------- 渲染：顶部上下文与底部结算 ----------------
+   顶部只放视角、会议名和参会者输入；结论 h1 由天平支点上方的气泡承载，
+   当前/合理投入与零碎事实由页面底部的结算区承载。 */
 // 这句话接在 h1 后面，所以不重复 h1 的措辞——重复等于又堆一层没有主次的字。
 function statusSentence(snap) {
   if (snap.status === "underpowered") return "这个配置已经破了价值底线，先补回来再往下走。";
@@ -9,10 +9,10 @@ function statusSentence(snap) {
   return "必要角色齐全，时长和产出对得上。";
 }
 
-// 参会者的大标题回答的是「我该不该来」，红色态仍优先说底线被破了。
+// 参会者的大标题回答的是「我该用哪种方式参与」，红色态仍优先说底线被破了。
 function headline(snap) {
   if (view !== "attendee" || snap.status === "underpowered") return STATUS_TITLES[snap.status];
-  return NEED_TITLES[snap.mine.need];
+  return PLAN_TITLES[snap.mine.plan];
 }
 
 function attendeeSentence(snap) {
@@ -92,7 +92,7 @@ function renderSheet(snap) {
 }
 
 /* ---------------- 渲染：参会者面板 ----------------
-   参会者要先确认「我是谁」，判断才有意义，所以角色是可勾选的（一人可兼多个角色）。 */
+   参会者要先确认「我是谁」，结论才有意义，所以角色是可勾选的（一人可兼多个角色）。 */
 function renderMyRoles() {
   const holder = $("mineRoles");
   holder.replaceChildren();
@@ -105,9 +105,10 @@ function renderMyRoles() {
     button.setAttribute("aria-pressed", String(active));
     text(button, role.label);
     button.addEventListener("click", () => {
-      // 至少保留一个角色：没有角色就没有「我是否必要」这个问题。
+      // 至少保留一个角色：没有角色就没有「我该怎么参与」这个问题。
       if (active && myRoleIds.length > 1) myRoleIds = myRoleIds.filter((id) => id !== role.id);
       else if (!active) myRoleIds = [...myRoleIds, role.id];
+      closeDraft(); // 换角色可能换结论，挂着的草稿是上一个结论写的
       render();
     });
     holder.append(button);
@@ -118,13 +119,17 @@ function renderMine(snap) {
   const visible = view === "attendee";
   $("mineRow").hidden = !visible;
   if (!visible) return;
-  // 判断本身在 h1，理由在它下面那句；这里只给能落地的事实：我是谁、议程里有几条和我有关。
-  const relevant = `${snap.mine.topics.length}/${snap.mine.syncCount} 个同步议题与你相关`;
-  text($("mineVerdict"), `${joinLabels(snap.mine.roles, "未指定角色")}｜${relevant}`);
   renderMyRoles();
-  document.querySelectorAll("[data-attendee-mode]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.attendeeMode === attendeeMode));
+  /* 被议程列为必要角色时，「我的贡献」不能把结论改成异步：底线压过自我评估。
+     禁用而不是隐藏，用户才能看到「这个选择存在，但此刻不成立」。 */
+  const shown = snap.mine.floor ? "decide" : myContribution; // 用户自己的选择仍留在 myContribution 里，换角色后会回来
+  document.querySelectorAll("[data-contribution]").forEach((button) => {
+    const key = button.dataset.contribution;
+    button.setAttribute("aria-pressed", String(key === shown));
+    button.disabled = snap.mine.floor && key !== "decide";
+    button.title = button.disabled ? `${joinTitles(snap.mine.required, "议程")}把你列为必要角色，这一档暂不成立` : CONTRIBUTION_LABELS[key];
   });
-  const minutes = attendeeMode === "full" ? snap.cost.syncMinutes : attendeeMode === "async" ? 0 : snap.mine.minutes;
-  text($("mineTime"), minutes ? `我的占用 ${formatMinutes(minutes)}` : "我不占用会议时间");
+  // 结论在 h1、理由在导语，这一行只留可核对的事实：几条议题与我相关、我占多少时间。
+  const relevant = `${snap.mine.topics.length}/${snap.mine.syncCount} 个同步议题与你相关`;
+  text($("mineFacts"), `${relevant}｜${snap.mine.minutes ? `我的占用 ${formatMinutes(snap.mine.minutes)}` : "我不占用会议时间"}`);
 }

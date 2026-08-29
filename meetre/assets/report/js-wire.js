@@ -48,6 +48,8 @@ function closeDraft() {
   draftKind = "message";
   document.body.dataset.drafting = "false";
   $("draftBox").hidden = true;
+  // 清掉文本，别让一份为旧结论写的草稿留在隐藏的框里等着被下次打开时看见。
+  $("draftText").value = "";
 }
 function copyText(value, button) {
   const original = button.textContent;
@@ -119,8 +121,9 @@ document.addEventListener("keydown", (event) => { if (event.key === "Escape" && 
 document.querySelectorAll("[data-perspective]").forEach((button) => {
   button.addEventListener("click", () => setView(button.dataset.perspective));
 });
-document.querySelectorAll("[data-attendee-mode]").forEach((button) => {
-  button.addEventListener("click", () => { attendeeMode = button.dataset.attendeeMode; render(); });
+// 换贡献等于换结论，挂着的草稿是上一个结论写的，必须收起。
+document.querySelectorAll("[data-contribution]").forEach((button) => {
+  button.addEventListener("click", () => { myContribution = button.dataset.contribution; closeDraft(); render(); });
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && mergePickedRoleId) {

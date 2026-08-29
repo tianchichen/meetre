@@ -1,13 +1,13 @@
 /* ---------------- 可变状态 ----------------
    view 是用户当前选的视角，可以和 data.perspective 不同：同一张秤票，
    组织者问「这场会该怎么开」，参会者问「我该不该来」。
-   state.merges 记录「哪个角色其实和另一个角色是同一个人」：absorbed -> host。 */
+   state.merges 记录「哪个角色整体并入另一个角色」：absorbed -> host。 */
 let data = loadHash() || loadEmbedded();
 const originalData = clone(data);
 let state = { roles: clone(data.roles), agenda: clone(data.agenda), merges: {} };
 let view = data.perspective === "attendee" ? "attendee" : "organizer";
 let myRoleIds = [defaultMyRoleId()];
-let attendeeMode = data.attendeePlan?.recommendedMode || "async";
+let myContribution = defaultContribution();
 let mergePickedRoleId = null;
 let mergeDraggingRoleId = null;
 let draftOpen = false;
@@ -18,6 +18,11 @@ function defaultMyRoleId() {
   if (data.attendeePlan?.currentRoleId) return data.attendeePlan.currentRoleId;
   // 没有 attendeePlan 时假设提问的人来自人数最多的那个角色（通常是知会者这类大桶）。
   return data.roles.reduce((best, role) => (role.originalCount > best.originalCount ? role : best), data.roles[0]).id;
+}
+
+// Agent 建议的参与方式只是「我的贡献」的初值，用户随时可以自己改。
+function defaultContribution() {
+  return CONTRIBUTION_FROM_MODE[data.attendeePlan?.recommendedMode] || "receive";
 }
 
 const roleById = (id) => state.roles.find((role) => role.id === id);
@@ -37,11 +42,11 @@ function effectiveRoles() {
 // 顺着合并关系找到真正出席的那个角色行。
 const hostRoleOf = (id) => roleById(state.merges[id] || id);
 
-/* 合并只在「确实是一个人」时成立，所以只允许并入单人角色，
-   也不允许套娃（A 并入 B、B 再并入 C 会让 A 的宿主消失）。 */
+/* 合并是角色级动作：源角色的整组人数一起并入宿主，不要求源角色只有 1 人。
+   也不允许套娃（A 并入 B、B 再并入 C 会让 A 的宿主关系变得不清楚）。 */
 function mergeCandidates(roleId) {
   const role = roleById(roleId);
-  if (!role || role.originalCount !== 1 || isHost(roleId)) return [];
+  if (!role || isHost(roleId)) return [];
   return state.roles.filter((other) => other.id !== roleId && !isMerged(other.id));
 }
 
@@ -125,31 +130,37 @@ function snapshot() {
   return { roles, cost, targetCost, budgetCost, status, problems, cautions: cautions(), originalCost, saved: originalCost - cost.total, mine: myAssessment() };
 }
 
-/* ---------------- 参会者：我是否必要 ----------------
-   参会者要的不是全盘处方，而是一条能拿去回复的判断：我在不在底线名单里。 */
+/* ---------------- 参会者：我该用哪种方式参与 ----------------
+   参会者要的不是全盘处方，而是一条能拿去回复的结论。 */
 function myTopics() {
   const plan = data.attendeePlan;
   const fromPlan = plan && myRoleIds.includes(plan.currentRoleId) ? plan.relevantAgendaIds : [];
   return syncTopics().filter((item) => item.requiredRoleIds.some((id) => myRoleIds.includes(id)) || fromPlan.includes(item.id));
 }
 
+/* 方式由两件事推导，不再让用户从四个选项里挑一个自己也说不清的组合：
+   floor —— 议程是否把我列为必要角色，这是底线，压过自我评估；
+   myContribution —— 我的贡献能不能只用文字表达。
+   到场就意味着待完整场次：没有「只参加相关议题」这一档。 */
 function myAssessment() {
   const mineRoles = myRoleIds.map(roleById).filter(Boolean);
   const topics = myTopics();
   const required = topics.filter((item) => item.requiredRoleIds.some((id) => myRoleIds.includes(id) && (roleById(id)?.requiredMin || 0) > 0));
-  const minutes = topics.reduce((sum, item) => sum + item.syncMinutes, 0);
   const total = syncTopics().reduce((sum, item) => sum + item.syncMinutes, 0);
-  const need = required.length ? (minutes < total ? "partial" : "essential") : (topics.length ? "partial" : "optional");
-  return { roles: mineRoles, topics, required, minutes, total, need, syncCount: syncTopics().length };
+  const floor = required.length > 0;
+  const plan = !syncTopics().length ? "after" : floor ? "attend" : PLAN_BY_CONTRIBUTION[myContribution];
+  return { roles: mineRoles, topics, required, floor, plan, minutes: plan === "attend" ? total : 0, total, syncCount: syncTopics().length };
 }
 
 function myReason(mine) {
-  if (mine.need === "essential") return `“${joinTitles(mine.required, "")}”把你列为必要角色，而且覆盖了整场会议的时间，缺你这些议题就得改期。`;
-  if (mine.need === "partial") {
-    const head = mine.required.length
-      ? `你在“${joinTitles(mine.required, "")}”里是必要角色`
-      : `“${joinTitles(mine.topics, "")}”和你相关，但没有把你列为必要角色`;
-    return `${head}，这部分约 ${formatMinutes(mine.minutes)}；其余 ${formatMinutes(Math.max(0, mine.total - mine.minutes))} 不需要你在场。`;
+  if (mine.plan === "attend") {
+    return mine.floor
+      ? `“${joinTitles(mine.required, "")}”把你列为必要角色，缺你就得改期，全程约 ${formatMinutes(mine.total)}。`
+      : `没有议题把你列为必要角色，但你要现场决定或对齐分歧，这件事只能在会上做，全程约 ${formatMinutes(mine.total)}。`;
   }
-  return `当前同步议程里没有任何议题把${joinLabels(mine.roles, "你的角色")}列为必要角色，你可以只接收结论。`;
+  if (mine.plan === "before") {
+    const scope = mine.topics.length ? `“${joinTitles(mine.topics, "")}”` : "议程";
+    return `你对${scope}的贡献是信息和材料，写成文字在会前发出就行，省下你这边 ${formatMinutes(mine.total)}。`;
+  }
+  return `没有议题需要${joinLabels(mine.roles, "你的角色")}现场表态，等一份结论就够了，省下你这边 ${formatMinutes(mine.total)}。`;
 }

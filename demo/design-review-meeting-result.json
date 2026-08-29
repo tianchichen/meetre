@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "perspective": "attendee",
+  "meeting": {
+    "title": "新首页设计评审",
+    "purpose": "收集核心反馈，决定是否进入下一轮设计与开发",
+    "expectedOutcome": "收敛需要修改的设计点，确认下一步交付负责人",
+    "outcomeLevel": "medium",
+    "outcomeWhy": "设计修改会影响团队下一轮排期，但每个决定都能在设计稿中回滚和继续迭代。",
+    "participants": 7,
+    "durationMinutes": 60
+  },
+  "verdict": {
+    "kind": "async",
+    "confidence": "high",
+    "summary": "设计稿走读和常规意见回收可以先异步完成；只有出现真实分歧时才值得开短会。"
+  },
+  "evidence": {
+    "for": [
+      {
+        "label": "需要时才现场收敛",
+        "detail": "如果用户路径或品牌方向出现冲突，设计负责人需要现场把意见收束成修改点。",
+        "weight": 2
+      }
+    ],
+    "against": [
+      {
+        "label": "独立评审即可",
+        "detail": "大多数评审者可以直接在设计稿中评论，不必同步走读每一页。",
+        "weight": 3
+      },
+      {
+        "label": "旁观者只需结果",
+        "detail": "等待下一轮设计产物的人不需要占用评审时段。",
+        "weight": 2
+      },
+      {
+        "label": "会议没有最终拍板",
+        "detail": "本次只形成修改清单，最终方案仍会在后续设计迭代中确认。",
+        "weight": 2
+      }
+    ]
+  },
+  "roles": [
+    {
+      "id": "design-lead",
+      "label": "设计负责人",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "收敛意见并负责修改稿"
+    },
+    {
+      "id": "product-owner",
+      "label": "产品负责人",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "校准用户目标和业务边界"
+    },
+    {
+      "id": "brand-reviewer",
+      "label": "品牌评审者",
+      "originalCount": 2,
+      "syncCount": 2,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "提供品牌语境和表达反馈"
+    },
+    {
+      "id": "customer-input",
+      "label": "用户研究输入",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "补充用户问题与使用场景"
+    },
+    {
+      "id": "engineering-partner",
+      "label": "研发协作人",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "提前识别实现约束"
+    },
+    {
+      "id": "observers",
+      "label": "会后知会者",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "接收修改结论，不参与评审"
+    }
+  ],
+  "agenda": [
+    {
+      "id": "walkthrough",
+      "title": "设计稿走读与背景",
+      "type": "update",
+      "syncRequirement": "none",
+      "mode": "sync",
+      "syncMinutes": 25,
+      "asyncMinutes": 8,
+      "minSyncMinutes": 5,
+      "requiredRoleIds": [],
+      "why": "设计稿、背景和约束可以在评论区提前阅读"
+    },
+    {
+      "id": "feedback",
+      "title": "确认冲突与修改点",
+      "type": "resolve",
+      "syncRequirement": "preferred",
+      "mode": "sync",
+      "syncMinutes": 25,
+      "asyncMinutes": 7,
+      "minSyncMinutes": 10,
+      "requiredRoleIds": ["design-lead", "product-owner"],
+      "why": "只有出现互相冲突的意见时才需要现场收敛"
+    },
+    {
+      "id": "next-iteration",
+      "title": "下一轮交付与评审标准",
+      "type": "co_create",
+      "syncRequirement": "preferred",
+      "mode": "sync",
+      "syncMinutes": 10,
+      "asyncMinutes": 5,
+      "minSyncMinutes": 5,
+      "requiredRoleIds": ["design-lead"],
+      "why": "交付负责人和验收标准可以随修改清单异步确认"
+    }
+  ],
+  "recommendation": {
+    "roleSyncCounts": {
+      "design-lead": 0,
+      "product-owner": 0,
+      "brand-reviewer": 0,
+      "customer-input": 0,
+      "engineering-partner": 0,
+      "observers": 0
+    },
+    "agendaModes": {
+      "walkthrough": "async",
+      "feedback": "async",
+      "next-iteration": "async"
+    },
+    "agendaMinutes": {
+      "walkthrough": 25,
+      "feedback": 25,
+      "next-iteration": 10
+    },
+    "why": "先让所有人异步看稿并留下具体评论；只有评论之间出现无法文字收敛的冲突时，再把必要角色拉回一场短会。"
+  },
+  "attendeePlan": {
+    "currentRoleId": "brand-reviewer",
+    "relevantAgendaIds": ["feedback"],
+    "recommendedMode": "before",
+    "recommendedMinutes": 0,
+    "message": "我会先在设计稿里留下具体评论，不占用同步评审时间；如果出现需要现场收敛的冲突，请再邀请我。"
+  }
+}

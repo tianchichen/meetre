@@ -11,7 +11,7 @@ Use this skill as a neutral meeting-time facility. The agent supplies the semant
 
 1. Infer the perspective:
    - `organizer`: optimize the whole meeting.
-   - `attendee`: decide whether the current user should attend, attend only selected agenda items, provide input first, or receive the result asynchronously.
+   - `attendee`: decide how the current user should take part — attend in full, send their contribution in writing before the meeting, or receive the conclusion afterwards.
 2. Extract the meeting title, purpose, expected outcome, outcome impact (`low`, `medium`, or `high`), participant count, duration, roles, and agenda from the user’s natural language. Keep unknowns explicit.
 3. If a decision-critical field is missing, ask at most one question. Ask in this order:
    - What must change or be decided after the meeting?
@@ -34,7 +34,9 @@ The report aims to be read in one screen: the verdict on top, a physical balance
 
 Hierarchy in the report area is deliberate: the meeting title is a small eyebrow line, the verdict is the only `h1`, and one sentence gives the reason without repeating the verdict. The only main comparison is current collective cost versus reasonable investment. Original/current/recommended detail lives in the evidence sheet.
 
-`perspective` in the result JSON only sets the initial view. The page carries an organizer/attendee switch, because the two perspectives evaluate different questions: an organizer plans the whole meeting, while an attendee needs a judgment on whether their own role is necessary here. In attendee view the `h1` answers that directly (must attend / only needed for part / not needed), and the actions become first-person.
+`perspective` in the result JSON only sets the initial view. The page carries an organizer/attendee switch, because the two perspectives evaluate different questions: an organizer plans the whole meeting, while an attendee needs to know how to take part. In attendee view the `h1` answers that directly (attend / send input before / receive the conclusion after), and the actions become first-person.
+
+The attendee panel holds two inputs, not a menu of outcomes: which roles the reader holds, and whether their contribution is a live decision, written information, or nothing but receiving the result. The page derives the way to take part from those two. A required-role floor overrides the reader's own answer — the two asynchronous answers are struck through and disabled, because a floor is not a matter of self-assessment. There is deliberately no "attend only the relevant items" option: partial attendance disrupts the meeting's rhythm and is rarely carried out, so attending means attending in full. `attendeePlan.recommendedMode` seeds the contribution answer; it is not a fixed verdict.
 
 The main investment comparison uses the Agent's concrete recommended configuration as the reasonable-investment baseline. The Agent still supplies a `low` / `medium` / `high` outcome judgment and one reason, but the HTML shows that analysis only in the evidence sheet; it does not expose a separate sensitivity control or apply a hidden multiplier.
 
@@ -51,11 +53,11 @@ There is exactly one primary next step at a time, and it produces an editable dr
 | `async` | send a written update instead |
 | `underpowered` | repair the floor — no draft is generated |
 
-| Attendee — own necessity | Primary step |
+| Attendee — derived way to take part | Primary step |
 | --- | --- |
-| essential | confirm attendance |
-| partial | propose attending only the relevant items (secondary: apply it) |
-| optional | decline and propose async (secondary: attend in full anyway) |
+| attend | confirm attendance (no secondary: applying it is the status quo) |
+| before | propose sending the input in writing beforehand (secondary: apply it) |
+| after | propose receiving the conclusion afterwards (secondary: apply it) |
 
 `underpowered` overrides the attendee view too: a broken floor is stated first, and no sendable draft is produced from either perspective.
 
