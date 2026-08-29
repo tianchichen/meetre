@@ -19,7 +19,7 @@
 - `meetre/scripts/render_report.py`
 - `meetre/references/fairness-constitution.md`
 - `meetre/references/result-schema.md`
-- `docs/project-context/overview.md`
+- `docs/maintainers/project-context/overview.md`
 - `tests/fixtures/organizer-shrink.json`
 - `tests/fixtures/attendee-async.json`
 

@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_DIR = ROOT / "assets" / "report"
+LOGO_PATH = ROOT.parent / "assets" / "logo.png"
 SHELL_PATH = TEMPLATE_DIR / "shell.html"
 # 交付物必须是单个离线 HTML，但源码按职责分片，好让每个文件都留在 800 行以内。
 # 顺序即依赖顺序：js-core 的常量被 js-validate 用到，js-wire 最后才调用 render()。
@@ -305,7 +306,15 @@ def render(document: Mapping[str, Any], output_path: Path) -> Path:
     validated = validate_result(document)
     payload = json.dumps(validated, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     encoded = base64.b64encode(payload).decode("ascii")
-    html = build_template().replace("__MEETING_DATA_B64__", encoded)
+    try:
+        logo_encoded = base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
+    except OSError as error:
+        raise FileNotFoundError(f"logo asset not found: {LOGO_PATH}") from error
+    html = (
+        build_template()
+        .replace("__MEETING_DATA_B64__", encoded)
+        .replace("__LOGO_DATA_URI__", f"data:image/png;base64,{logo_encoded}")
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
     return output_path

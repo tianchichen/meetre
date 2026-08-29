@@ -25,7 +25,7 @@
 - `tests/test_render_report.py`（改读 `build_template()`，新增片段完整性与 800 行上限两个测试）
 - `tests/browser_smoke.cjs`（新增 `checkRoleMerge()` 与 `checkPerspectiveSwitch()`）
 - `index.html`、`demo/*.html`（由 renderer 重新生成）
-- `docs/project-context/overview.md`、`README.md`、`meetre/SKILL.md`、`meetre/references/fairness-constitution.md`
+- `docs/maintainers/project-context/overview.md`、`README.md`、`meetre/SKILL.md`、`meetre/references/fairness-constitution.md`
 
 ## Verification
 

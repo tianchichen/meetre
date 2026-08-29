@@ -2,10 +2,10 @@
    视觉路径是「先告诉我你是谁 → 看结论 → 调整方案 → 读时间账单」。天平不再贴住页面底边，
    由自身高度和顶部留白落在首屏约 3/5～2/3 的位置；内容增多时仍允许整页自然滚动。 */
 .page { display: flex; flex-direction: column; min-height: 100dvh; padding: clamp(16px, 3.2vh, 32px) var(--pad-x) 0; }
-.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; flex: none; }
-.brand { display: flex; align-items: center; gap: 9px; font: 700 12px var(--body); letter-spacing: .1em; text-transform: uppercase; }
-.brand-mark { width: 34px; height: 8px; background: var(--ink); }
-.topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px 14px; flex: none; }
+.topbar-spacer { display: block; }
+.logo { display: block; width: clamp(64px, 7vw, 80px); height: auto; justify-self: center; }
+.topbar-actions { display: flex; flex-wrap: wrap; align-items: center; justify-self: end; gap: 6px; }
 .ghost { padding: 6px 11px; border: 1.5px solid var(--ink); background: transparent; font: 600 11px var(--body); letter-spacing: .04em; white-space: nowrap; }
 .ghost:hover, .ghost:focus-visible { background: var(--ink); color: var(--state); outline: none; }
 

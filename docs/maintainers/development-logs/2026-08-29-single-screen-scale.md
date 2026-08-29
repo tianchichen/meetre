@@ -25,7 +25,7 @@
 - `meetre/references/fairness-constitution.md`
 - `meetre/SKILL.md`
 - `tests/browser_smoke.cjs`
-- `docs/project-context/overview.md`
+- `docs/maintainers/project-context/overview.md`
 - `README.md`
 
 ## Verification

@@ -23,7 +23,7 @@
 - `meetre/assets/report/js-render-report.js`
 - `tests/browser_smoke.cjs`
 - `index.html`
-- `docs/project-context/overview.md`
+- `docs/maintainers/project-context/overview.md`
 - `README.md`
 
 ## Verification

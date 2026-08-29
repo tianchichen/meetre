@@ -24,7 +24,9 @@ class RenderReportTests(unittest.TestCase):
             html = output.read_text(encoding="utf-8")
         self.assertIn("__MEETING_DATA_B64__", render_report.build_template())
         self.assertNotIn("__MEETING_DATA_B64__", html)
-        self.assertIn("<span>meetre</span>", html)
+        self.assertNotIn("__LOGO_DATA_URI__", html)
+        self.assertIn('class="logo"', html)
+        self.assertIn("src=\"data:image/png;base64,", html)
 
     def test_template_assembles_every_fragment(self):
         """交付物是单文件，但源码分片；缺任何一片都应该在渲染时立刻暴露。"""
