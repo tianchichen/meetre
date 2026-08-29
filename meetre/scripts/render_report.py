@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a Meeting Fair Scale result and render a self-contained HTML report."""
+"""Validate a meetre result and render a self-contained HTML report."""
 
 from __future__ import annotations
 
@@ -13,7 +13,20 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE_PATH = ROOT / "assets" / "report-template.html"
+TEMPLATE_DIR = ROOT / "assets" / "report"
+SHELL_PATH = TEMPLATE_DIR / "shell.html"
+# 交付物必须是单个离线 HTML，但源码按职责分片，好让每个文件都留在 800 行以内。
+# 顺序即依赖顺序：js-core 的常量被 js-validate 用到，js-wire 最后才调用 render()。
+STYLE_FRAGMENTS = ("styles.css", "styles-report.css", "styles-scale.css", "styles-sheet.css")
+SCRIPT_FRAGMENTS = (
+    "js-core.js",
+    "js-validate.js",
+    "js-model.js",
+    "js-actions.js",
+    "js-render-scale.js",
+    "js-render-report.js",
+    "js-wire.js",
+)
 ALLOWED_PERSPECTIVES = {"organizer", "attendee"}
 ALLOWED_VERDICTS = {"keep", "shrink", "async", "clarify"}
 ALLOWED_CONFIDENCE = {"low", "medium", "high"}
@@ -21,6 +34,7 @@ ALLOWED_AGENDA_TYPES = {"decision", "resolve", "co_create", "update", "sensitive
 ALLOWED_SYNC_REQUIREMENTS = {"required", "preferred", "none"}
 ALLOWED_MODES = {"sync", "async"}
 ALLOWED_ATTENDEE_MODES = {"full", "partial", "input_then_leave", "async", "clarify"}
+ALLOWED_OUTCOME_LEVELS = {"low", "medium", "high"}
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 
 
@@ -105,6 +119,10 @@ def validate_result(document: Mapping[str, Any]) -> Dict[str, Any]:
     _string(meeting.get("title"), "meeting.title", maximum=120)
     _string(meeting.get("purpose"), "meeting.purpose", maximum=500)
     _string(meeting.get("expectedOutcome"), "meeting.expectedOutcome", maximum=500, required=False)
+    if "outcomeLevel" in meeting:
+        _enum(meeting.get("outcomeLevel"), "meeting.outcomeLevel", ALLOWED_OUTCOME_LEVELS)
+    if "outcomeWhy" in meeting:
+        _string(meeting.get("outcomeWhy"), "meeting.outcomeWhy", maximum=300)
     participants = _int(meeting.get("participants"), "meeting.participants", minimum=1, maximum=100)
     duration = _int(meeting.get("durationMinutes"), "meeting.durationMinutes", minimum=5, maximum=480)
 
@@ -164,7 +182,7 @@ def validate_result(document: Mapping[str, Any]) -> Dict[str, Any]:
         _enum(item.get("mode"), f"{path}.mode", ALLOWED_MODES)
         _int(item.get("syncMinutes"), f"{path}.syncMinutes", maximum=480)
         _int(item.get("asyncMinutes"), f"{path}.asyncMinutes", maximum=120)
-        min_sync = _int(item.get("minSyncMinutes"), f"{path}.minSyncMinutes", maximum=480)
+        min_sync = _int(item.get("minSyncMinutes"), f"{path}.minSyncMinutes", minimum=5, maximum=480)
         if min_sync > item.get("syncMinutes", 0):
             _fail(f"{path}.minSyncMinutes", "cannot exceed syncMinutes")
         _string(item.get("why"), f"{path}.why", maximum=240)
@@ -173,8 +191,20 @@ def validate_result(document: Mapping[str, Any]) -> Dict[str, Any]:
             if role_id not in role_ids:
                 _fail(f"{path}.requiredRoleIds", f"unknown role id: {role_id}")
 
-    if sum(item.get("syncMinutes", 0) for item in agenda) != duration:
-        _fail("agenda", "syncMinutes values must add up to meeting.durationMinutes")
+    referenced_required_roles = {
+        role_id
+        for item in agenda
+        for role_id in item.get("requiredRoleIds", [])
+    }
+    for role in roles:
+        if role["requiredMin"] > 0 and role["id"] not in referenced_required_roles:
+            _fail(
+                f"roles[{role_ids.index(role['id'])}].requiredMin",
+                "a positive requiredMin must be referenced by at least one agenda item",
+            )
+
+    if sum(item.get("syncMinutes", 0) for item in agenda if item.get("mode") == "sync") != duration:
+        _fail("agenda", "sync-mode syncMinutes values must add up to meeting.durationMinutes")
 
     recommendation = _mapping(document.get("recommendation"), "recommendation")
     role_sync_counts = _mapping(recommendation.get("roleSyncCounts"), "recommendation.roleSyncCounts")
@@ -188,8 +218,6 @@ def validate_result(document: Mapping[str, Any]) -> Dict[str, Any]:
         recommended_count = _int(role_sync_counts[role_id], f"recommendation.roleSyncCounts.{role_id}", maximum=100)
         if recommended_count > role["originalCount"]:
             _fail(f"recommendation.roleSyncCounts.{role_id}", "cannot exceed originalCount")
-        if recommended_count < role["requiredMin"]:
-            _fail(f"recommendation.roleSyncCounts.{role_id}", "cannot be below requiredMin")
     agenda_modes = _mapping(recommendation.get("agendaModes"), "recommendation.agendaModes")
     agenda_minutes = _mapping(recommendation.get("agendaMinutes"), "recommendation.agendaMinutes")
     for item_id in agenda_modes:
@@ -202,10 +230,26 @@ def validate_result(document: Mapping[str, Any]) -> Dict[str, Any]:
         item_id = item["id"]
         _enum(agenda_modes.get(item_id), f"recommendation.agendaModes.{item_id}", ALLOWED_MODES)
         minutes = _int(agenda_minutes.get(item_id), f"recommendation.agendaMinutes.{item_id}", maximum=480)
+        if item["syncRequirement"] == "required" and agenda_modes[item_id] != "sync":
+            _fail(f"recommendation.agendaModes.{item_id}", "required agenda items must remain synchronous")
         if agenda_modes[item_id] == "sync" and minutes < item["minSyncMinutes"]:
             _fail(f"recommendation.agendaMinutes.{item_id}", "sync minutes cannot be below minSyncMinutes")
 
-    _int(recommendation.get("asyncMinutes", 0), "recommendation.asyncMinutes", maximum=120)
+    for role in roles:
+        role_id = role["id"]
+        dependent_sync = any(
+            role_id in item.get("requiredRoleIds", []) and agenda_modes[item["id"]] == "sync"
+            for item in agenda
+        )
+        if dependent_sync and role_sync_counts[role_id] < role["requiredMin"]:
+            _fail(
+                f"recommendation.roleSyncCounts.{role_id}",
+                "cannot be below requiredMin for a recommended synchronous agenda item",
+            )
+
+    if verdict["kind"] == "async" and any(mode != "async" for mode in agenda_modes.values()):
+        _fail("recommendation.agendaModes", "an async verdict cannot recommend synchronous agenda items")
+
     _string(recommendation.get("why"), "recommendation.why", maximum=300)
 
     if perspective == "attendee":
@@ -226,16 +270,37 @@ def validate_result(document: Mapping[str, Any]) -> Dict[str, Any]:
     return dict(document)
 
 
+def _fragment(name: str, indent: str) -> str:
+    path = TEMPLATE_DIR / name
+    if not path.is_file():
+        raise FileNotFoundError(f"template fragment not found: {path}")
+    body = path.read_text(encoding="utf-8").rstrip("\n")
+    if not indent:
+        return body
+    return "\n".join(indent + line if line.strip() else line for line in body.split("\n"))
+
+
+def build_template() -> str:
+    """Assemble the single-file HTML template from the fragments under assets/report."""
+
+    shell = _fragment("shell.html", "")
+    styles = "\n\n".join(_fragment(name, " " * 4) for name in STYLE_FRAGMENTS)
+    body = _fragment("body.html", " " * 2)
+    script = "\n\n".join(_fragment(name, " " * 6) for name in SCRIPT_FRAGMENTS)
+    return (
+        shell.replace("__STYLES__", styles)
+        .replace("__BODY__", body)
+        .replace("__SCRIPT__", script)
+    )
+
+
 def render(document: Mapping[str, Any], output_path: Path) -> Path:
     """Render a validated result into a standalone HTML file."""
 
     validated = validate_result(document)
-    if not TEMPLATE_PATH.is_file():
-        raise FileNotFoundError(f"template not found: {TEMPLATE_PATH}")
-    template = TEMPLATE_PATH.read_text(encoding="utf-8")
     payload = json.dumps(validated, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     encoded = base64.b64encode(payload).decode("ascii")
-    html = template.replace("__MEETING_DATA_B64__", encoded)
+    html = build_template().replace("__MEETING_DATA_B64__", encoded)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(html, encoding="utf-8")
     return output_path

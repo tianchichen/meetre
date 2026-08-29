@@ -1,0 +1,44 @@
+/* ---------------- 基础与状态配色 ----------------
+   四种底色都在黑色油墨字上达到 WCAG AA（对比度 ≥ 5.2:1）。
+   人形图标只用 --ink / --paper 两种填色区分「必要 / 可有可无」，
+   不再引入第五种色相，避免和四种状态底色打架。 */
+:root {
+  --ink: #141210;
+  --paper: #f7f3ec;
+  --state: #4c86e6;
+  --tilt: 0deg;
+  --fulcrum: clamp(64px, 8.5vw, 104px);
+  --beam: clamp(11px, 1.4dvh, 16px);
+  --swing: 52px; /* 摆幅与两盘的下沉量都由 JS 按实测臂长覆盖 */
+  --drop-left: 0px;
+  --drop-right: 0px;
+  --beam-top: clamp(20px, 3.2vw, 42px);
+  --pad-x: clamp(18px, 4.5vw, 60px);
+  --ease: cubic-bezier(.34, 1.4, .64, 1);
+  --display: "Baskerville", "Songti SC", "STSong", serif;
+  --body: "Avenir Next", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --mono: "SFMono-Regular", "Menlo", monospace;
+}
+body[data-status="balanced"] { --state: #25a85c; }
+body[data-status="overweight"] { --state: #4c86e6; }
+body[data-status="async"] { --state: #ed7033; }
+body[data-status="underpowered"] { --state: #e25c48; }
+
+* { box-sizing: border-box; }
+/* .mine / .draft 用了 display:flex|block，必须让 hidden 仍然生效。 */
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--state);
+  font-family: var(--body);
+  line-height: 1.5;
+  transition: background-color .7s ease;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+button, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3, p { margin: 0; }
+.label { font: 11px/1 var(--mono); letter-spacing: .11em; text-transform: uppercase; opacity: .72; }

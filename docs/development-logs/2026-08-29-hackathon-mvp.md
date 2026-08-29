@@ -6,7 +6,7 @@
 
 ## What Was Completed
 
-- 创建独立的 `meeting-fair-scale` Agent Skill，采用 `SKILL.md`、references、scripts、assets 结构。
+- 创建独立的 `meetre` Agent Skill，采用 `SKILL.md`、references、scripts、assets 结构。
 - 定义四种 AI 处方：`keep`、`shrink`、`async`、`clarify`。
 - 支持发起人和参会者两种视角，以及参会者沟通话术。
 - 完成 Result Schema v1、严格输入校验、离线 HTML renderer 和公共设施秤视觉模板。
@@ -15,14 +15,14 @@
 
 ## Verification
 
-- `PYTHONPYCACHEPREFIX=/tmp/meeting-pycache python3 -m unittest discover -s tests -v`：5 个测试通过。
+- `PYTHONPYCACHEPREFIX=/tmp/meetre-pycache python3 -m unittest discover -s tests -v`：5 个测试通过。
 - 两份 organizer/attendee fixture 均可由 renderer 生成 HTML。
 - 原生 HTML 内联 JavaScript 通过 Node `vm.Script` 语法检查。
 - Playwright smoke test 已编写，但当前环境缺少可启动的 Playwright Chromium；本机 Chrome 在 headless 启动时异常退出，浏览器交互验证仍需在有可用浏览器的环境完成。
 
 ## Detours And Lessons
 
-- 当前沙箱不允许写入 `.agents/skills`，所以把 Skill 保持为独立的 `meeting-fair-scale/` 文件夹；复制到任意兼容 Agent 的 skills 目录即可。
+- 当前沙箱不允许写入 `.agents/skills`，所以把 Skill 保持为独立的 `meetre/` 文件夹；复制到任意兼容 Agent 的 skills 目录即可。
 - `generate_openai_yaml.py` 依赖未安装的 PyYAML，因此 `agents/openai.yaml` 按已读规范手写，未引入额外依赖。
 
 ## Still Uncertain

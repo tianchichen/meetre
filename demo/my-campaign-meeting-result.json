@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "perspective": "organizer",
+  "meeting": {
+    "title": "明天的项目会",
+    "purpose": "围绕下一次 campaign 进行主题头脑风暴",
+    "expectedOutcome": "产出一组候选 campaign 主题，留到会后评审",
+    "outcomeLevel": "low",
+    "outcomeWhy": "会议只产出可继续筛选的候选主题，不在现场形成难以撤回的承诺。",
+    "participants": 8,
+    "durationMinutes": 60
+  },
+  "verdict": {
+    "kind": "shrink",
+    "confidence": "medium",
+    "summary": "头脑风暴需要现场共创，但 8 人 60 分钟把背景说明和旁观者也拉进来了。"
+  },
+  "evidence": {
+    "for": [
+      {
+        "label": "需要现场共创",
+        "detail": "即时联想、追问和碰撞能更快产出彼此建立在其上的候选主题。",
+        "weight": 3
+      },
+      {
+        "label": "需要共同校准边界",
+        "detail": "项目目标、受众和 campaign 约束需要在现场共享，避免主题偏离方向。",
+        "weight": 2
+      }
+    ],
+    "against": [
+      {
+        "label": "背景说明可异步",
+        "detail": "项目背景和已有素材可以提前写成 brief，不必占用全员同步时间。",
+        "weight": 2
+      },
+      {
+        "label": "旁观者不改变产出",
+        "detail": "只负责会后评审或知会的人不需要参与现场发散。",
+        "weight": 3
+      },
+      {
+        "label": "会议不负责拍板",
+        "detail": "既然主题留到会后评审，就不必让所有评审角色在现场等待最终决定。",
+        "weight": 2
+      }
+    ]
+  },
+  "roles": [
+    {
+      "id": "facilitator",
+      "label": "主持与推进",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "控制发散节奏并把想法收束为候选主题"
+    },
+    {
+      "id": "campaign-owner",
+      "label": "项目负责人",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "提供目标、约束并确认候选主题仍服务于项目"
+    },
+    {
+      "id": "brand-input",
+      "label": "品牌与市场输入",
+      "originalCount": 2,
+      "syncCount": 2,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "判断主题与品牌语境和市场机会是否相容"
+    },
+    {
+      "id": "customer-input",
+      "label": "用户与业务输入",
+      "originalCount": 2,
+      "syncCount": 2,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "补充用户问题和业务目标，避免只从内部视角发散"
+    },
+    {
+      "id": "creative-input",
+      "label": "创意执行输入",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 1,
+      "why": "判断候选主题是否有可延展的表达空间"
+    },
+    {
+      "id": "reviewers",
+      "label": "会后评审者",
+      "originalCount": 1,
+      "syncCount": 1,
+      "asyncCount": 0,
+      "excludedCount": 0,
+      "requiredMin": 0,
+      "why": "会后评审候选主题，不必参与现场发散"
+    }
+  ],
+  "agenda": [
+    {
+      "id": "brief",
+      "title": "背景与约束说明",
+      "type": "update",
+      "syncRequirement": "none",
+      "mode": "sync",
+      "syncMinutes": 15,
+      "asyncMinutes": 5,
+      "minSyncMinutes": 5,
+      "requiredRoleIds": [],
+      "why": "背景、目标和已有素材可提前写入 brief"
+    },
+    {
+      "id": "brainstorm",
+      "title": "campaign 主题头脑风暴",
+      "type": "co_create",
+      "syncRequirement": "preferred",
+      "mode": "sync",
+      "syncMinutes": 35,
+      "asyncMinutes": 15,
+      "minSyncMinutes": 20,
+      "requiredRoleIds": [
+        "facilitator",
+        "campaign-owner",
+        "brand-input",
+        "customer-input",
+        "creative-input"
+      ],
+      "why": "高密度联想、追问和碰撞是这段同步的独占价值"
+    },
+    {
+      "id": "cluster",
+      "title": "整理候选主题与会后评审标准",
+      "type": "co_create",
+      "syncRequirement": "preferred",
+      "mode": "sync",
+      "syncMinutes": 10,
+      "asyncMinutes": 10,
+      "minSyncMinutes": 5,
+      "requiredRoleIds": [
+        "facilitator",
+        "campaign-owner"
+      ],
+      "why": "现场把发散结果整理成可带走、可评审的候选清单"
+    }
+  ],
+  "recommendation": {
+    "roleSyncCounts": {
+      "facilitator": 1,
+      "campaign-owner": 1,
+      "brand-input": 1,
+      "customer-input": 1,
+      "creative-input": 1,
+      "reviewers": 0
+    },
+    "agendaModes": {
+      "brief": "async",
+      "brainstorm": "sync",
+      "cluster": "sync"
+    },
+    "agendaMinutes": {
+      "brief": 5,
+      "brainstorm": 35,
+      "cluster": 10
+    },
+    "why": "把背景说明改成异步 brief，现场用 45 分钟完成发散与整理；保留能改变主题质量的 5 个核心角色，其余人会后评审。"
+  },
+  "attendeePlan": null
+}

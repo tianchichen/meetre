@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "meeting-fair-scale" / "scripts" / "render_report.py"
+SCRIPT = ROOT / "meetre" / "scripts" / "render_report.py"
 sys.path.insert(0, str(SCRIPT.parent))
 import render_report  # noqa: E402
 
@@ -22,9 +22,26 @@ class RenderReportTests(unittest.TestCase):
             output = Path(directory) / "report.html"
             render_report.render(document, output)
             html = output.read_text(encoding="utf-8")
-        self.assertIn("__MEETING_DATA_B64__", render_report.TEMPLATE_PATH.read_text(encoding="utf-8"))
+        self.assertIn("__MEETING_DATA_B64__", render_report.build_template())
         self.assertNotIn("__MEETING_DATA_B64__", html)
-        self.assertIn("会秤 / Fair Scale", html)
+        self.assertIn("<span>meetre</span>", html)
+
+    def test_template_assembles_every_fragment(self):
+        """交付物是单文件，但源码分片；缺任何一片都应该在渲染时立刻暴露。"""
+        template = render_report.build_template()
+        for placeholder in ("__STYLES__", "__BODY__", "__SCRIPT__"):
+            self.assertNotIn(placeholder, template)
+        self.assertIn("function basicValidate", template)  # js-validate.js
+        self.assertIn("function renderBeam", template)  # js-render-scale.js
+        self.assertIn("data-perspective", template)  # body.html 的视角切换
+        self.assertNotIn("data-outcome-level", template)  # 主报告不再暴露意义不清的结果影响控件
+        self.assertNotIn("<link", template)  # 必须保持零外链
+
+    def test_every_fragment_stays_under_the_line_cap(self):
+        """把 800 行上限落到片段上：这是拆分模板换来的东西，别让它悄悄退化。"""
+        for path in sorted(render_report.TEMPLATE_DIR.iterdir()):
+            lines = len(path.read_text(encoding="utf-8").splitlines())
+            self.assertLessEqual(lines, 800, f"{path.name} has {lines} lines")
 
     def test_valid_attendee_result_renders(self):
         document = self.load("attendee-async.json")
@@ -44,6 +61,30 @@ class RenderReportTests(unittest.TestCase):
         document["agenda"][0]["requiredRoleIds"] = ["missing-role"]
         with self.assertRaises(render_report.ValidationError):
             render_report.validate_result(document)
+
+    def test_rejects_zero_minimum_sync_minutes(self):
+        document = self.load("organizer-shrink.json")
+        document["agenda"][0]["minSyncMinutes"] = 0
+        with self.assertRaises(render_report.ValidationError):
+            render_report.validate_result(document)
+
+    def test_rejects_required_item_in_async_recommendation(self):
+        document = self.load("organizer-shrink.json")
+        document["recommendation"]["agendaModes"]["date"] = "async"
+        with self.assertRaises(render_report.ValidationError):
+            render_report.validate_result(document)
+
+    def test_rejects_unknown_outcome_level(self):
+        document = self.load("organizer-shrink.json")
+        document["meeting"]["outcomeLevel"] = "huge"
+        with self.assertRaises(render_report.ValidationError):
+            render_report.validate_result(document)
+
+    def test_legacy_v1_without_outcome_analysis_still_renders(self):
+        document = self.load("organizer-shrink.json")
+        document["meeting"].pop("outcomeLevel")
+        document["meeting"].pop("outcomeWhy")
+        render_report.validate_result(document)
 
     def test_cli_returns_nonzero_for_invalid_json(self):
         with tempfile.TemporaryDirectory() as directory:

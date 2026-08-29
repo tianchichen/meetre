@@ -1,0 +1,147 @@
+<main class="page">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>meetre</span></div>
+    <div class="topbar-actions">
+      <div class="viewswitch" role="group" aria-label="切换评估视角">
+        <button type="button" data-perspective="organizer" aria-pressed="true">组织者</button>
+        <button type="button" data-perspective="attendee" aria-pressed="false">参会者</button>
+      </div>
+      <button class="ghost" id="resetButton" type="button">恢复原方案</button>
+      <button class="ghost" id="detailsButton" type="button" aria-expanded="false">判断依据</button>
+    </div>
+  </header>
+
+  <section class="report">
+    <p class="eyebrow"><span id="perspectiveTag">组织者视角</span><b id="meetingTitle">—</b></p>
+    <h1 id="headline">—</h1>
+    <p class="verdict" id="statusLine" aria-live="polite">—</p>
+    <p class="caution" id="cautionLine" hidden></p>
+
+    <div class="investment">
+      <small>当前投入 <span aria-hidden="true">/</span> 合理投入</small>
+      <p><b id="metricCost">—</b><span>/</span><b id="metricBudget">—</b></p>
+    </div>
+    <p class="facts">
+      <span>同步 <b id="metricPeople">—</b></span>
+      <span>时长 <b id="metricDuration">—</b></span>
+      <span id="metricSavedLabel">返还时间</span><span><b id="metricSaved">—</b></span>
+    </p>
+
+    <!-- 判断和理由已经由 h1 和它下面那句话说完了，这个面板只负责「我怎么落地」：
+         我是谁、议程里有多少和我有关、我选择哪种参与方式。 -->
+    <div class="mine" id="mineRow" hidden>
+      <p class="mine-verdict" id="mineVerdict">—</p>
+      <div class="mine-controls">
+        <span class="label">我的角色</span>
+        <span id="mineRoles"></span>
+      </div>
+      <div class="mine-controls">
+        <span class="label">我的参与方式</span>
+        <button class="mine-option" type="button" data-attendee-mode="full" aria-pressed="false">全程参加</button>
+        <button class="mine-option" type="button" data-attendee-mode="partial" aria-pressed="false">只参加相关议题</button>
+        <button class="mine-option" type="button" data-attendee-mode="input_then_leave" aria-pressed="false">先给输入</button>
+        <button class="mine-option" type="button" data-attendee-mode="async" aria-pressed="false">异步接收结果</button>
+        <span id="mineTime" class="label"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="next">
+    <div class="next-row">
+      <button class="cta" id="ctaButton" type="button">—</button>
+      <button class="ghost" id="ctaAlternate" type="button" hidden></button>
+      <span class="cta-note" id="ctaNote"></span>
+    </div>
+    <div class="draft" id="draftBox" hidden>
+      <textarea id="draftText" aria-label="可编辑的文案草稿"></textarea>
+      <div class="draft-actions">
+        <button class="ghost" id="copyDraftButton" type="button">复制</button>
+        <button class="ghost" id="reviewButton" type="button">带回 Agent 复评</button>
+        <button class="ghost" id="closeDraftButton" type="button">收起</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="scale" id="scale" aria-label="会议天平">
+    <div class="trays">
+      <div class="tray tray-left">
+        <div class="tray-head"><b>谁来</b><span id="leftCaption">—</span></div>
+        <div class="tray-body" id="roleTray"></div>
+        <p class="merge-hint" id="mergeHint" aria-live="polite">拖动单人角色的把手到另一角色，即可由同一人兼任</p>
+      </div>
+      <div class="tray tray-right">
+        <div class="tray-head"><span id="rightCaption">—</span><b>做什么</b></div>
+        <div class="tray-body" id="topicTray"></div>
+      </div>
+    </div>
+    <div class="beam" id="beam" aria-hidden="true"></div>
+    <!-- 支点也是这台秤的表情：眼珠跟随鼠标/当前操作侧，平衡时露出笑脸。 -->
+    <div class="fulcrum" id="fulcrum" aria-hidden="true">
+      <span class="face-eye face-eye-left"><span class="face-pupil"></span></span>
+      <span class="face-eye face-eye-right"><span class="face-pupil"></span></span>
+      <svg class="face-mouth" viewBox="0 0 48 24" aria-hidden="true" focusable="false">
+        <path class="mouth-neutral" d="M7 12H41"></path>
+        <path class="mouth-smile" d="M7 8C13 18 35 18 41 8"></path>
+        <path class="mouth-frown" d="M7 16C13 6 35 6 41 16"></path>
+      </svg>
+    </div>
+  </section>
+</main>
+
+<!-- 人形座位：实心=会议中，描边=异步知会，虚线=无需参与；徽标数字=这个人兼几个角色。 -->
+<template id="seatTemplate">
+  <svg viewBox="0 0 20 24" aria-hidden="true" focusable="false">
+    <g class="body">
+      <circle cx="9.6" cy="5.6" r="3.9"></circle>
+      <path d="M9.6 11.2c-4.3 0-6.1 3-6.1 7.8v4.2h12.2v-4.2c0-4.8-1.8-7.8-6.1-7.8z"></path>
+    </g>
+    <g class="badge-group">
+      <circle class="badge" cx="16.4" cy="4.6" r="4.4"></circle>
+      <text class="badge-text" x="16.4" y="7.1" text-anchor="middle">2</text>
+    </g>
+  </svg>
+</template>
+
+<aside class="sheet" id="sheet" data-open="false" aria-labelledby="sheetHeading">
+  <div class="sheet-inner">
+    <button class="ghost sheet-close" id="sheetClose" type="button">关闭</button>
+    <div class="label">判断依据</div>
+    <h2 id="sheetHeading">为什么这样称</h2>
+    <div class="block">
+      <h3>Agent 的结论</h3>
+      <p class="rules"><b id="verdictKind">—</b><span id="verdictSummary"></span></p>
+      <p class="rules" id="recommendationWhy" style="margin-top:8px"></p>
+    </div>
+    <div class="block evidence">
+      <div><h3>为什么值得同步</h3><ul id="evidenceFor"></ul></div>
+      <div><h3>为什么不该这么重</h3><ul id="evidenceAgainst"></ul></div>
+    </div>
+    <div class="block">
+      <h3>原始 / 推荐 / 当前</h3>
+      <div class="compare">
+        <div><small>原始会议</small><b id="originalPlan">—</b><span id="originalCost"></span></div>
+        <div><small>AI 推荐</small><b id="recommendedPlan">—</b><span id="recommendedCost"></span></div>
+        <div><small>你的当前方案</small><b id="currentPlan">—</b><span id="currentCostText"></span></div>
+      </div>
+    </div>
+    <div class="block">
+      <h3>会议目的</h3>
+      <p class="rules" id="meetingPurpose">—</p>
+    </div>
+    <div class="block">
+      <h3>结果影响</h3>
+      <p class="rules"><b id="meetingOutcome">—</b><span id="outcomeReason"></span></p>
+    </div>
+    <div class="block">
+      <h3>规则公开</h3>
+      <p class="rules">必要角色不能被“优化”掉；必须同步的议题不能被假装成异步；异步阅读时间照样计入成本。合并角色只是承认“一个人兼多个角色”，被合并角色的底线仍然要由兼任的人满足。天平只重新计算你的配置，不会偷偷改写 Agent 的结论。</p>
+    </div>
+    <div class="block import">
+      <h3>导入 Agent 秤票</h3>
+      <textarea id="jsonInput" placeholder="把任意兼容 Agent 返回的 Result Schema v1 JSON 粘贴到这里"></textarea>
+      <div class="draft-actions"><button class="ghost" id="importButton" type="button">导入并重新称重</button></div>
+      <div class="error" id="importError" role="alert"></div>
+    </div>
+    <p class="foot">meetre 是建议，不是行政命令。判断由你的 Agent 完成，称重由这个页面在本地完成。</p>
+  </div>
+</aside>

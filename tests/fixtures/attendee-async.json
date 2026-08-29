@@ -5,6 +5,8 @@
     "title": "设计评审同步会",
     "purpose": "同步最新设计并收集意见",
     "expectedOutcome": "确认需要修改的设计点",
+    "outcomeLevel": "low",
+    "outcomeWhy": "修改点可以在设计稿中逐项确认，决定容易撤回，也不改变跨团队承诺。",
     "participants": 6,
     "durationMinutes": 45
   },
@@ -27,14 +29,13 @@
     {"id": "observer", "label": "观察者", "originalCount": 2, "syncCount": 2, "asyncCount": 0, "excludedCount": 0, "requiredMin": 0, "why": "只需知道结果"}
   ],
   "agenda": [
-    {"id": "walkthrough", "title": "设计稿走读", "type": "update", "syncRequirement": "none", "mode": "sync", "syncMinutes": 25, "asyncMinutes": 8, "minSyncMinutes": 0, "requiredRoleIds": [], "why": "可以先看稿再评论"},
+    {"id": "walkthrough", "title": "设计稿走读", "type": "update", "syncRequirement": "none", "mode": "sync", "syncMinutes": 25, "asyncMinutes": 8, "minSyncMinutes": 5, "requiredRoleIds": [], "why": "可以先看稿再评论"},
     {"id": "feedback", "title": "确认修改点", "type": "resolve", "syncRequirement": "preferred", "mode": "sync", "syncMinutes": 20, "asyncMinutes": 7, "minSyncMinutes": 10, "requiredRoleIds": ["designer"], "why": "设计负责人需要收敛意见"}
   ],
   "recommendation": {
     "roleSyncCounts": {"designer": 1, "reviewer": 0, "observer": 0},
     "agendaModes": {"walkthrough": "async", "feedback": "async"},
     "agendaMinutes": {"walkthrough": 25, "feedback": 20},
-    "asyncMinutes": 15,
     "why": "先异步收集意见，只有出现冲突时再邀请相关评审者。"
   },
   "attendeePlan": {

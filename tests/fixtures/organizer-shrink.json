@@ -5,6 +5,8 @@
     "title": "周五项目同步会",
     "purpose": "同步项目进度并决定下周发布日期",
     "expectedOutcome": "决定发布日期，确认风险负责人",
+    "outcomeLevel": "medium",
+    "outcomeWhy": "结果会改变团队排期和风险责任，但仍局限在一个项目团队内。",
     "participants": 8,
     "durationMinutes": 60
   },
@@ -31,7 +33,7 @@
     {"id": "informed", "label": "知会者", "originalCount": 3, "syncCount": 3, "asyncCount": 0, "excludedCount": 0, "requiredMin": 0, "why": "只需知道最终结果"}
   ],
   "agenda": [
-    {"id": "progress", "title": "项目进度播报", "type": "update", "syncRequirement": "none", "mode": "sync", "syncMinutes": 30, "asyncMinutes": 5, "minSyncMinutes": 0, "requiredRoleIds": [], "why": "信息可提前写入异步更新"},
+    {"id": "progress", "title": "项目进度播报", "type": "update", "syncRequirement": "none", "mode": "sync", "syncMinutes": 30, "asyncMinutes": 5, "minSyncMinutes": 5, "requiredRoleIds": [], "why": "信息可提前写入异步更新"},
     {"id": "date", "title": "决定发布日期", "type": "decision", "syncRequirement": "required", "mode": "sync", "syncMinutes": 20, "asyncMinutes": 5, "minSyncMinutes": 10, "requiredRoleIds": ["decision", "product", "engineering"], "why": "需要现场权衡取舍"},
     {"id": "risks", "title": "确认风险与负责人", "type": "resolve", "syncRequirement": "preferred", "mode": "sync", "syncMinutes": 10, "asyncMinutes": 5, "minSyncMinutes": 5, "requiredRoleIds": ["owner", "product"], "why": "阻塞需要实时确认"}
   ],
@@ -39,7 +41,6 @@
     "roleSyncCounts": {"decision": 1, "product": 1, "engineering": 1, "owner": 1, "informed": 0},
     "agendaModes": {"progress": "async", "date": "sync", "risks": "sync"},
     "agendaMinutes": {"progress": 30, "date": 15, "risks": 10},
-    "asyncMinutes": 5,
     "why": "保留需要决策和解决阻塞的核心角色，把进度播报改成异步。"
   },
   "attendeePlan": null

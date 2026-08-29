@@ -1,21 +1,49 @@
-# 会秤项目上下文
+# meetre 项目上下文
 
 ## Human View
 
-会秤帮助职场人在会议发生前检查：这场会是否必须同步、哪些人真的需要在场、哪些议题更适合异步。用户可以从发起人或参会者视角使用自己的 Agent，最终获得一个可交互的 HTML 沙盘。
+meetre 帮助职场人在会议发生前检查：这场会是否必须同步、哪些人真的需要在场、哪些议题更适合异步。用户可以从发起人或参会者视角使用自己的 Agent，最终获得一个可交互的 HTML 沙盘。
 
 页面不是单纯的会议评分卡。用户可以在沙盘中把角色移到异步区、切换议题形式、调整分钟数，并立即看到团队时间成本和价值底线是否仍然满足。
 
+## 视觉与交互
+
+目标是一屏读完：上方是报告区，下方是一台贴着页面底边的天平，中间是一个「下一步」大按钮。整页背景色就是当前状态（绿=可以开、蓝=有优化空间、橙=建议异步、红=调过头了），梁向更重的一侧压下去。四种底色对黑色油墨字的对比度都不低于 5.2:1。内容装得下就正好一屏；参会者面板、草稿或窄屏撑破一屏时，整页滚动，而不是裁掉内容或塞进一个看不见的内层滚动区。
+
+报告区的主次是刻意排的：会议名退成一行眉标题（它标识这场会，但不影响该不该开），判词是唯一的 h1，接一句不重复判词措辞的理由，中层只留「当前投入 / 合理投入」，零碎事实压到最后一行。原始 / 当前 / AI 推荐的完整三方对比收进「判断依据」，不再与结论争夺注意力。
+
+Agent 必须判断结果影响并给一句可检查的理由：`low`（局部、易撤回）、`medium`（改变团队承诺/资源/排期）、`high`（跨团队、难逆转或时间窗口短）。这项分析只在「判断依据」中展示。主报告不再提供影响级别控件，也不叠加倍率；「合理投入」直接采用 AI 推荐配置的成本。
+
+视角切换是一等控件，不是设置项：组织者看的是全盘规划，参会者要判断「我这个角色在这场会里是否必要」，两者的评估内容和 action button 都不同。参会者视角的 h1 直接回答该不该来（你必须在场 / 你只需要来一段 / 你不必到场），下方面板只负责落地（我是谁、几条同步议题与我相关、我选哪种参与方式）；红色状态例外，底线被破时两个视角都先说底线。
+
+人员与议题控件都长在天平上，不另设配置面板。左盘每个角色一排人形图标，一人一个，点击循环「会议中 → 异步知会 → 无需参与」；必要角色用字重加下划线、可有可无的角色用常规字重区分，不占用状态色（底色本身就在变，色相会被状态色吃掉）。一个人可能兼多个角色：拖动单人角色行首的 `⠿` 把手到另一个角色，宿主的第一个人形叠一枚角色计数徽标，下方出现「由 X 兼任 / 拆开」。点把手后再点目标是触控与键盘后备。合并只减少人数和成本，不能绕过必要角色底线：`breaches()` 和 `repairBreaches()` 都走 `hostRoleOf()`，比的是宿主的同步人数。右盘每个议题一行，点标题切同步/异步，行内步进器按 5 分钟调整。证据、原始/推荐/当前对比、JSON 导入都收在「判断依据」浮层里。
+
+「下一步」按视角 × 状态决定：组织者看状态（按建议调整 / 改发一条异步更新 / 发出这个邀请），参会者看自己的必要性（请辞并提议异步 / 提议只参加相关议题 / 确认参加），多数分支还带一个次选动作。点击后就地展开可编辑文案再复制。红色状态例外：两个视角都不生成可发出的文案，只提供确定性的「补回必要底线」。
+
+天平几何：`--tilt` 是梁的角度，两盘各按自身臂长算出 `--drop-*` 跟随所在那端的梁面，因此任何倾角和屏宽下两盘都不会被梁压住。`--swing` 由 JS 用实测臂长写入，CSS 据此预留底部空间。
+
 ## Agent View
 
-- `meeting-fair-scale/SKILL.md`：触发条件、最多一次追问、Agent 输出流程和资源入口。
-- `meeting-fair-scale/references/fairness-constitution.md`：同步价值、角色必要性、异步成本、四种处方和三态平衡规则。
-- `meeting-fair-scale/references/result-schema.md`：Result Schema v1；是 Agent 与 renderer 之间的边界。
-- `meeting-fair-scale/scripts/render_report.py`：Python 3 标准库校验和模板注入，不访问网络。
-- `meeting-fair-scale/assets/report-template.html`：原生 HTML/CSS/JS；状态计算、角色按钮、议题切换和 JSON 导入均在浏览器完成。
+- `meetre/SKILL.md`：触发条件、最多一次追问、Agent 输出流程和资源入口。
+- `meetre/references/fairness-constitution.md`：同步价值、角色必要性、异步成本、四种处方和四态平衡规则。
+- `meetre/references/result-schema.md`：Result Schema v1；是 Agent 与 renderer 之间的边界。
+- `meetre/scripts/render_report.py`：Python 3 标准库校验和模板注入，不访问网络。
+- `meetre/assets/report/`：模板片段（原生 HTML/CSS/JS）；状态计算、角色交互、议题切换和 JSON 导入均在浏览器完成。renderer 按固定顺序拼成一个文件。
 
-数据流：Agent 生成 JSON → renderer 验证并 Base64 注入模板 → HTML 本地复制状态 → 浏览器重新计算成本、平衡状态和话术。
+数据流：Agent 生成 JSON → renderer 验证并 Base64 注入模板 → HTML 对内嵌或 hash 数据做同等结构校验 → HTML 本地复制状态 → 浏览器重新计算成本、平衡状态和话术。
+
+当前成本语义：同步成本按同步人数乘同步议题分钟；异步成本按所有未排除人员（同步参会者也包括在内）乘异步议题阅读分钟。排除人数单独展示，不折进成本。Result Schema v1 没有每个议题的完整参会映射，因此 `requiredRoleIds` 只用于必要角色底线，不用于推断完整参会名单。
+同步议题的最低有效时长为 5 分钟；推荐配置不得把 `required` 议题改为异步。
+集体成本超过 60 人·分钟后按「人时」显示，保留一位小数——它是估算量，不需要精确到分钟。
+
+状态判定顺序：`underpowered` → `async` → `overweight` → `balanced`，底线优先于重量。`overweight` 以 AI 推荐配置的成本为合理投入参照。`async` 是对当前配置的客观描述，不等于 Agent 给了 `async` 处方。破了底线时不展示返还时间、不生成可发出的文案，避免奖励「靠删掉必要的人来省时间」。天平支点同时承担状态表情：眼珠跟随指针或键盘当前操作侧，`balanced` 显示笑脸，`underpowered` 显示皱眉；纯视觉层不参与状态计算。
 
 不要让 HTML 改写议题含义；如果会议目的或同步理由改变，应将当前配置带回 Agent 重新判断。不要把评分改成不可解释的百分制。
 
-验证入口：`PYTHONPYCACHEPREFIX=/tmp/meeting-pycache python3 -m unittest discover -s tests -v`。浏览器 smoke test 需要本机可用的 Chromium/Chrome。
+`index.html` 是模板注入 `tests/fixtures/organizer-shrink.json` 后的产物，不要手工编辑；改完片段用 renderer 重新生成。
+
+交付物必须是单个离线 HTML（零外链、不 fetch），但源码按职责拆在 `assets/report/` 下，每片都留在 800 行以内：`shell.html` 是外壳（含 `__STYLES__` / `__BODY__` / `__SCRIPT__` / `__MEETING_DATA_B64__` 四个占位符），`body.html` 是 DOM，四个 `styles*.css` 和七个 `js-*.js` 按 `render_report.py` 里 `STYLE_FRAGMENTS` / `SCRIPT_FRAGMENTS` 的顺序拼接——顺序即依赖顺序（js-core 的常量被后面用到，js-wire 最后才调用 `render()`）。`tests/test_render_report.py` 会遍历该目录把 800 行上限钉死，并检查占位符全部被替换、没有 `<link>`。
+
+验证入口：`PYTHONPYCACHEPREFIX=/tmp/meetre-pycache python3 -m unittest discover -s tests -v` 和 `node tests/browser_smoke.cjs`。smoke test 用 Chrome DevTools Protocol 直连本机 Chrome/Chromium，零 npm 依赖，需要 Node 18+（内置 WebSocket 与 fetch）；它覆盖四种状态的转换、座位与议题交互、next step 文案、真实 drag event 合并（含合并不能绕过底线、拆开可还原）、390px 窄屏无横向溢出、视角切换，以及页面内校验器的拒绝路径。
+
+天平几何和裁切属于「说不清就会退化」的那类约束，靠实测而不是推理确认：改动布局后用 CDP 量各视角 × 各状态下两盘到梁面的净空、横向溢出和 h1 顶边，全部为正才算过。

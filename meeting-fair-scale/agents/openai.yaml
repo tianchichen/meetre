@@ -1,6 +1,0 @@
-interface:
-  display_name: "会议公平秤"
-  short_description: "用 AI 称量并优化会议，生成交互式 HTML 沙盘"
-  default_prompt: "Use $meeting-fair-scale to weigh this meeting and generate an interactive HTML optimization sandbox."
-policy:
-  allow_implicit_invocation: true

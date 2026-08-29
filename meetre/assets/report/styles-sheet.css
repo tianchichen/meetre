@@ -1,0 +1,39 @@
+/* ---------------- 详情浮层：证据、原始对比、导入 ---------------- */
+.sheet { position: fixed; inset: 0; z-index: 20; display: none; padding: clamp(16px, 4vh, 44px) var(--pad-x); background: var(--state); overflow-y: auto; }
+.sheet[data-open="true"] { display: block; }
+.sheet-inner { width: min(880px, 100%); margin: 0 auto; }
+.sheet h2 { font: 700 clamp(24px, 3.4vw, 38px) var(--display); letter-spacing: -.03em; }
+.sheet-close { position: sticky; top: 0; float: right; }
+.block { margin-top: clamp(18px, 3vh, 30px); padding-top: 14px; border-top: 1.5px solid var(--ink); }
+.block h3 { margin-bottom: 9px; font: 700 12px var(--body); letter-spacing: .05em; text-transform: uppercase; }
+.evidence { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(14px, 2.6vw, 30px); }
+.evidence ul { margin: 0; padding-left: 17px; font-size: 13px; }
+.evidence li { margin-bottom: 6px; }
+.evidence li[data-weight="3"] { font-weight: 700; }
+.compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; font-size: 13px; }
+.compare div { padding: 10px; border: 1.5px solid var(--ink); }
+.compare small { display: block; font: 10px var(--mono); letter-spacing: .09em; text-transform: uppercase; opacity: .72; }
+.compare b { display: block; margin-top: 4px; font: 700 15px var(--mono); }
+.rules { max-width: 62ch; font-size: 13px; }
+.import textarea { display: block; width: 100%; min-height: 96px; padding: 10px; border: 1.5px solid var(--ink); background: rgba(255, 255, 255, .82); resize: vertical; font: 11px/1.5 var(--mono); }
+.error { display: none; margin-top: 8px; padding: 8px 10px; border: 1.5px solid var(--ink); background: rgba(255, 255, 255, .82); font-size: 12px; }
+.foot { margin-top: clamp(18px, 3vh, 30px); padding-top: 12px; border-top: 1.5px solid var(--ink); font: 10px var(--mono); letter-spacing: .05em; opacity: .74; }
+
+@media (max-width: 900px) {
+  .investment { margin-left: 0; text-align: left; }
+}
+@media (max-width: 720px) {
+  .trays { grid-template-columns: 1fr 1fr; gap: calc(var(--fulcrum) + 10px); }
+  .role-need, .topic-lock { display: none; }
+  .evidence { grid-template-columns: 1fr; }
+}
+/* 整页滚动现在是基础行为（见 styles.css / .page 的 min-height），窄屏只需要缩字号。 */
+@media (max-width: 480px) {
+  .role-name { font-size: 12.5px; }
+  .topic-name { font-size: 12.5px; }
+  .seat { width: 17px; height: 21px; }
+  .merge-handle { width: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
